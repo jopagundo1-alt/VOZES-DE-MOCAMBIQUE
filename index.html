@@ -1,33 +1,204 @@
-# 🇲🇿 ALM — Atlas Linguístico de Moçambique (Versão 2)
+from pathlib import Path
+import zipfile, textwrap, json
 
-> “Mapear as línguas. Preservar as vozes.”
+base = Path("/mnt/data/alm-v2")
+base.mkdir(exist_ok=True)
 
-A **Versão 2** do Atlas Linguístico de Moçambique evolui de uma página estática de demonstração para uma **plataforma colaborativa real**, permitindo recolha descentralizada, registo de variantes regionais, arquivo sonoro nativo e moderação científica.
+index = r'''<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Atlas Linguístico de Moçambique — plataforma colaborativa para mapear, preservar e valorizar as línguas de Moçambique.">
+  <title>ALM — Atlas Linguístico de Moçambique</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="#inicio"><span class="flagmark">🇲🇿</span><span><b>ALM</b><small>Atlas Linguístico de Moçambique</small></span></a>
+  <button class="menu" aria-label="Abrir menu">☰</button>
+  <nav>
+    <a href="#inicio">Início</a><a href="#mapa">Mapa</a><a href="#linguas">Línguas</a>
+    <a href="#dicionario">Dicionário</a><a href="#contribuir">Contribuir</a><a href="#comunidade">Comunidade</a>
+    <button class="admin-btn" data-open="admin">Administração</button>
+  </nav>
+</header>
 
----
+<main id="inicio">
+<section class="hero">
+  <div class="hero-copy">
+    <span class="eyebrow">PATRIMÓNIO LINGUÍSTICO NACIONAL</span>
+    <h1>Mapear as línguas.<br><em>Preservar as vozes.</em></h1>
+    <p>Um atlas colaborativo para descobrir, documentar e valorizar a diversidade linguística de Moçambique — do Rovuma ao Maputo.</p>
+    <div class="actions"><a class="btn primary" href="#mapa">Explorar o Atlas →</a><a class="btn ghost" href="#contribuir">+ Contribuir</a></div>
+    <div class="hero-note"><span>●</span> Plataforma comunitária em construção</div>
+  </div>
+  <div class="hero-card">
+    <div class="map-art">
+      <div class="map-title">MOÇAMBIQUE</div>
+      <div class="moz-shape"><span class="pin p1">N</span><span class="pin p2">C</span><span class="pin p3">S</span></div>
+      <div class="map-label north">NORTE</div><div class="map-label centre">CENTRO</div><div class="map-label south">SUL</div>
+    </div>
+    <div class="hero-card-footer"><b>Explorar por região</b><span>10 províncias · múltiplas línguas</span></div>
+  </div>
+</section>
 
-## 🚀 O que muda na Versão 2
+<section class="stats">
+  <div><strong>20+</strong><span>Línguas catalogadas</span></div><div><strong>10</strong><span>Províncias</span></div>
+  <div><strong>120+</strong><span>Registos iniciais</span></div><div><strong>42</strong><span>Colaboradores</span></div>
+</section>
 
-1. **Mapa Linguístico Interativo:** Navegação por províncias moçambicanas com detalhe de distribuição de falantes.
-2. **Dicionário Colaborativo:** Consulta de termos com estados de validação (`Pendente`, `Em análise`, `Verificado`).
-3. **Sistema de Correção & Histórico:** As contribuições antigas não são apagadas; o sistema preserva o histórico de versões e variantes locais.
-4. **Arquivo Sonoro Nativo:** Simulação de gravação e reprodução de áudio de pronúncias, saudações e provérbios.
-5. **Painel de Moderação:** Interface dedicada para validadores e administradores aprovarem ou solicitarem esclarecimentos sobre novos termos.
+<section class="section" id="mapa">
+  <div class="section-head"><div><span class="eyebrow">EXPLORAR</span><h2>Mapa linguístico</h2></div><p>Seleccione uma região ou província para explorar as línguas registadas.</p></div>
+  <div class="map-panel">
+    <div class="province-grid">
+      <button class="province north" data-province="Cabo Delgado">Cabo Delgado</button>
+      <button class="province north" data-province="Niassa">Niassa</button>
+      <button class="province north" data-province="Nampula">Nampula</button>
+      <button class="province centre" data-province="Tete">Tete</button>
+      <button class="province centre" data-province="Zambézia">Zambézia</button>
+      <button class="province centre" data-province="Manica">Manica</button>
+      <button class="province centre" data-province="Sofala">Sofala</button>
+      <button class="province south" data-province="Inhambane">Inhambane</button>
+      <button class="province south" data-province="Gaza">Gaza</button>
+      <button class="province south" data-province="Maputo">Maputo</button>
+    </div>
+    <aside class="map-info"><span class="eyebrow">PROVÍNCIA</span><h3 id="selectedProvince">Sofala</h3><p id="provinceText">Explore os registos linguísticos associados à província seleccionada.</p><div id="provinceTags" class="tags"></div><button class="btn dark" id="provinceExplore">Ver registos</button></aside>
+  </div>
+</section>
 
----
+<section class="section alt" id="linguas">
+  <div class="section-head"><div><span class="eyebrow">CATÁLOGO</span><h2>Línguas de Moçambique</h2></div><p>Perfis com localização, variantes, expressões e materiais comunitários.</p></div>
+  <div class="filters"><input id="languageSearch" placeholder="Pesquisar língua..."><select id="regionFilter"><option value="">Todas as regiões</option><option>Norte</option><option>Centro</option><option>Sul</option></select></div>
+  <div id="languageGrid" class="language-grid"></div>
+</section>
 
-## 🛠️ Tecnologias Utilizadas
-* **HTML5 & Tailwind CSS** (via CDN) para uma interface limpa, moderna e responsiva.
-* **JavaScript (Vanilla)** para gestão de estado local, simulação de formulários, gravação e moderação em tempo real.
-* *Pronto para integração com o Supabase* (Base de dados relacional e autenticação).
+<section class="section" id="dicionario">
+  <div class="section-head"><div><span class="eyebrow">DICIONÁRIO COLABORATIVO</span><h2>Palavras e expressões</h2></div><p>Pesquise por palavra, significado, língua ou região.</p></div>
+  <div class="dictionary-bar"><input id="wordSearch" placeholder="Ex.: mbhaka, saudação, gato..."><select id="langFilter"><option value="">Todas as línguas</option></select><select id="statusFilter"><option value="">Todos os estados</option><option>Verificado</option><option>Em análise</option><option>Pendente</option></select></div>
+  <div id="dictionary" class="dictionary"></div>
+</section>
 
----
+<section class="section contribute" id="contribuir">
+  <div class="contribute-intro"><span class="eyebrow">A SUA VOZ CONTA</span><h2>Contribua para o Atlas</h2><p>Conhece uma palavra, expressão, provérbio ou pronúncia que ainda não está registada? Partilhe-a. O Atlas preserva também variantes e conhecimentos locais.</p><div class="principles"><div>✓ Registo comunitário</div><div>✓ Revisão antes da publicação</div><div>✓ Histórico das alterações</div><div>✓ Respeito pelas variantes locais</div></div></div>
+  <form id="contributionForm" class="form-card">
+    <label>Seu nome <input name="name" required placeholder="Nome ou nome de colaborador"></label>
+    <div class="two"><label>Língua <select name="language" id="contribLanguage" required></select></label><label>Província <select name="province" required><option value="">Seleccione...</option><option>Sofala</option><option>Manica</option><option>Zambézia</option><option>Tete</option><option>Nampula</option><option>Niassa</option><option>Cabo Delgado</option><option>Inhambane</option><option>Gaza</option><option>Maputo</option></select></label></div>
+    <label>Palavra ou expressão <input name="term" required placeholder="Ex.: uma palavra na língua local"></label>
+    <label>Significado em português <input name="meaning" required></label>
+    <label>Contexto / frase / provérbio <textarea name="context" rows="3"></textarea></label>
+    <label>Observação ou fonte <textarea name="source" rows="2" placeholder="Localidade, informante, livro, tradição oral, etc."></textarea></label>
+    <label class="upload">🔊 Áudio da pronúncia <input type="file" accept="audio/*" name="audio"><small>Interface preparada para ligação a armazenamento de áudio na V3.</small></label>
+    <button class="btn primary full" type="submit">Enviar para revisão →</button><p class="form-msg" id="formMsg"></p>
+  </form>
+</section>
 
-## 📦 Estrutura do Projeto
-```text
-atlas-linguistico-mocambique-v2/
-│
-├── index.html       # Interface completa (Mapa, Dicionário, Formulário, Moderação)
-├── style.css        # Estilos customizados e animações
-├── script.js        # Lógica de interatividade e dados simulados
-└── README.md        # Documentação do projeto
+<section class="section alt" id="comunidade">
+  <div class="section-head"><div><span class="eyebrow">TRANSPARÊNCIA</span><h2>Comunidade e histórico</h2></div><p>Veja como o conhecimento entra no Atlas e como as informações podem ser rectificadas.</p></div>
+  <div class="workflow"><div><b>01</b><h3>Contribuição</h3><p>Um membro envia uma informação.</p></div><div><b>02</b><h3>Análise</h3><p>A equipa ou comunidade verifica a informação.</p></div><div><b>03</b><h3>Publicação</h3><p>O registo aprovado entra no Atlas.</p></div><div><b>04</b><h3>Rectificação</h3><p>Novas evidências ficam registadas no histórico.</p></div></div>
+  <div class="history"><div class="history-head"><h3>Actividade recente</h3><span class="status verified">Sistema activo</span></div><div id="activity"></div></div>
+</section>
+</main>
+
+<footer><div><b>🇲🇿 ALM</b><p>Atlas Linguístico de Moçambique</p></div><div><span>Mapear as línguas. Preservar as vozes.</span><small>Interface V2 · preparada para base de dados e moderação</small></div></footer>
+
+<div class="modal" id="entryModal"><div class="modal-box"><button class="close">×</button><div id="entryContent"></div></div></div>
+<div class="modal" id="correctionModal"><div class="modal-box"><button class="close">×</button><span class="eyebrow">RECTIFICAR INFORMAÇÃO</span><h2>Sugerir uma correcção</h2><form id="correctionForm"><input type="hidden" name="term"><label>Seu nome<input name="name" required></label><label>O que deve ser corrigido?<textarea name="correction" rows="5" required></textarea></label><label>Fonte / localidade<textarea name="source" rows="3"></textarea></label><button class="btn primary full">Enviar sugestão</button><p class="form-msg" id="correctionMsg"></p></form></div></div>
+<div class="modal" id="admin"><div class="modal-box admin-box"><button class="close">×</button><span class="eyebrow">PAINEL</span><h2>Administração do Atlas</h2><p>Esta é a interface de gestão da V2. A ligação à autenticação e à base de dados será feita na próxima etapa.</p><div class="admin-cards"><div><b id="pendingCount">0</b><span>Pendentes</span></div><div><b>18</b><span>Em análise</span></div><div><b>104</b><span>Verificados</span></div></div><h3>Fila de moderação</h3><div id="moderationList"></div></div></div>
+<script src="script.js"></script>
+</body>
+</html>'''
+
+style = r''':root{--green:#007a3d;--red:#d21034;--yellow:#f7d117;--ink:#17221d;--muted:#65736c;--cream:#f7f4eb;--line:#dfe6e1;--white:#fff;--shadow:0 18px 50px rgba(17,39,28,.09)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);font-family:"DM Sans",sans-serif;background:#fff}a{text-decoration:none;color:inherit}.topbar{height:76px;display:flex;align-items:center;justify-content:space-between;padding:0 5%;border-bottom:1px solid var(--line);background:rgba(255,255,255,.96);position:sticky;top:0;z-index:20;backdrop-filter:blur(12px)}.brand{display:flex;align-items:center;gap:10px}.brand b{font-size:23px;color:var(--green)}.brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:.08em;text-transform:uppercase}.flagmark{font-size:29px}.topbar nav{display:flex;align-items:center;gap:24px;font-size:13px;font-weight:600}.topbar nav a:hover{color:var(--green)}.admin-btn{border:1px solid var(--green);background:white;color:var(--green);border-radius:999px;padding:9px 14px;font-weight:700}.menu{display:none;border:0;background:none;font-size:25px}
+.hero{min-height:640px;padding:80px 7%;display:grid;grid-template-columns:1.05fr .95fr;gap:7%;align-items:center;background:linear-gradient(135deg,#fff 0%,#f7faf6 100%);border-bottom:7px solid var(--yellow)}.eyebrow{font-size:11px;font-weight:800;letter-spacing:.16em;color:var(--green)}h1,h2{font-family:"Playfair Display",serif}h1{font-size:clamp(45px,6vw,76px);line-height:1.02;margin:18px 0}h1 em{font-style:normal;color:var(--green)}h2{font-size:42px;margin:8px 0 12px}.hero p{max-width:650px;font-size:18px;line-height:1.7;color:var(--muted)}.actions{display:flex;gap:12px;margin:28px 0}.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:10px;padding:13px 19px;font-weight:800;border:0;cursor:pointer;font-family:inherit}.primary{background:var(--green);color:#fff}.ghost{border:1px solid #b8c8be;color:var(--green);background:#fff}.dark{background:#17221d;color:#fff}.full{width:100%}.hero-note{font-size:12px;color:var(--muted)}.hero-note span{color:var(--green)}.hero-card{background:#fff;border:1px solid var(--line);border-radius:26px;overflow:hidden;box-shadow:var(--shadow)}.map-art{height:410px;background:linear-gradient(160deg,#eef8f0,#fff6cc);position:relative;display:flex;align-items:center;justify-content:center}.moz-shape{height:310px;width:185px;background:linear-gradient(90deg,var(--green) 0 25%,#f5f0df 25% 72%,var(--red) 72%);clip-path:polygon(28% 0,72% 4%,85% 14%,77% 27%,90% 40%,77% 51%,83% 63%,69% 77%,74% 88%,55% 100%,35% 91%,29% 75%,15% 65%,22% 50%,10% 38%,22% 23%,14% 12%);position:relative}.map-title{position:absolute;top:28px;font-weight:900;letter-spacing:.2em}.pin{position:absolute;border-radius:50%;background:var(--yellow);border:3px solid #fff;width:34px;height:34px;text-align:center;padding-top:5px;font-weight:900}.p1{top:35px;right:40px}.p2{top:130px;left:48px}.p3{bottom:45px;right:47px}.map-label{position:absolute;font-size:10px;font-weight:800;letter-spacing:.1em}.north{top:76px}.centre{top:205px}.south{bottom:55px}.hero-card-footer{padding:18px 22px;display:flex;justify-content:space-between}.hero-card-footer span{color:var(--muted);font-size:12px}.stats{display:grid;grid-template-columns:repeat(4,1fr);padding:30px 7%;border-bottom:1px solid var(--line)}.stats div{padding:10px 25px;border-right:1px solid var(--line)}.stats div:last-child{border:0}.stats strong{display:block;font-size:30px;color:var(--green)}.stats span{font-size:12px;color:var(--muted)}
+.section{padding:90px 7%}.section.alt{background:var(--cream)}.section-head{display:flex;justify-content:space-between;gap:40px;align-items:end;margin-bottom:35px}.section-head p{max-width:470px;color:var(--muted);line-height:1.6}.map-panel{display:grid;grid-template-columns:1.3fr .7fr;gap:25px;background:#f0f6f0;border-radius:25px;padding:25px}.province-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;min-height:420px;padding:35px;background:linear-gradient(135deg,#e9f5ec,#fff9d7);border-radius:20px}.province{border:1px solid #cad9ce;background:#fff;border-radius:10px;padding:13px 7px;font:600 12px "DM Sans";cursor:pointer;align-self:center;transition:.2s}.province:hover,.province.active{background:var(--green);color:#fff;transform:translateY(-2px)}.map-info{background:#fff;border-radius:20px;padding:32px;display:flex;flex-direction:column;justify-content:center}.map-info h3{font-family:"Playfair Display";font-size:38px;margin:10px 0}.map-info p{color:var(--muted);line-height:1.6}.tags{display:flex;flex-wrap:wrap;gap:7px;margin:15px 0 25px}.tags span{font-size:11px;padding:7px 9px;background:#edf6ef;border-radius:20px;color:var(--green);font-weight:700}
+.filters,.dictionary-bar{display:flex;gap:10px;margin-bottom:20px}.filters input,.filters select,.dictionary-bar input,.dictionary-bar select{flex:1;border:1px solid var(--line);border-radius:10px;padding:13px;background:#fff;font:inherit}.language-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.lang-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:23px;transition:.2s}.lang-card:hover{transform:translateY(-3px);box-shadow:var(--shadow)}.lang-top{display:flex;justify-content:space-between;align-items:start}.lang-card h3{font-family:"Playfair Display";font-size:24px;margin:5px 0}.region{font-size:10px;font-weight:800;padding:6px 8px;border-radius:20px;background:#eef6f0;color:var(--green)}.lang-card p{color:var(--muted);font-size:13px;line-height:1.55}.lang-meta{font-size:11px;color:#7c8982;margin-top:15px}.lang-card button{margin-top:14px;background:none;border:0;color:var(--green);font-weight:800;padding:0;cursor:pointer}
+.dictionary{display:grid;grid-template-columns:repeat(2,1fr);gap:13px}.word-card{border:1px solid var(--line);border-radius:15px;padding:19px;background:#fff}.word-head{display:flex;justify-content:space-between}.word{font-family:"Playfair Display";font-size:25px}.meaning{font-size:14px;margin:6px 0}.word-meta{font-size:11px;color:var(--muted)}.status{display:inline-block;font-size:10px;padding:5px 8px;border-radius:20px;font-weight:800}.verified{background:#e5f4e9;color:#14713d}.review{background:#eef1fb;color:#4a5fa6}.pending{background:#fff3d2;color:#956c00}.word-actions{display:flex;gap:12px;margin-top:12px}.linkbtn{border:0;background:none;color:var(--green);font:700 11px "DM Sans";cursor:pointer;padding:0}
+.contribute{display:grid;grid-template-columns:.85fr 1.15fr;gap:8%;background:linear-gradient(135deg,#f2f8f2,#fff)}.contribute-intro h2{font-size:48px}.contribute-intro>p{font-size:16px;color:var(--muted);line-height:1.7}.principles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:28px;font-size:12px;font-weight:700}.form-card{background:#fff;padding:30px;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow)}label{display:block;font-size:11px;font-weight:800;margin-bottom:14px}label input,label textarea,label select{display:block;width:100%;margin-top:7px;border:1px solid var(--line);border-radius:9px;padding:12px;font:inherit;font-weight:400;background:#fff}textarea{resize:vertical}.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.upload{padding:14px;background:#f7faf7;border-radius:10px}.upload small{display:block;color:var(--muted);font-weight:400;margin-top:5px}.form-msg{font-size:12px;color:var(--green);min-height:18px}
+.workflow{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.workflow>div{padding:25px;background:#fff;border:1px solid var(--line);border-radius:16px}.workflow b{color:var(--red);font-size:13px}.workflow h3{margin:25px 0 7px}.workflow p{font-size:12px;color:var(--muted);line-height:1.5}.history{margin-top:22px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px}.history-head{display:flex;justify-content:space-between;align-items:center}.activity-item{padding:14px 0;border-top:1px solid var(--line);font-size:12px;display:flex;justify-content:space-between;gap:15px}.activity-item span{color:var(--muted)}
+footer{padding:35px 7%;background:#17221d;color:#fff;display:flex;justify-content:space-between}footer p,footer small{color:#aab8af;font-size:11px;display:block}footer span{display:block;margin-bottom:8px;color:#f7d117}
+.modal{display:none;position:fixed;inset:0;background:rgba(10,20,15,.55);z-index:50;padding:5vh 20px;overflow:auto}.modal.open{display:block}.modal-box{max-width:650px;margin:auto;background:#fff;border-radius:20px;padding:32px;position:relative;box-shadow:0 30px 100px #0004}.close{position:absolute;right:18px;top:13px;border:0;background:none;font-size:28px;cursor:pointer}.modal-box h2{margin-top:10px}.admin-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0}.admin-cards div{background:#f3f7f3;padding:18px;border-radius:12px}.admin-cards b{font-size:27px;color:var(--green);display:block}.admin-cards span{font-size:11px;color:var(--muted)}.moderation-item{padding:15px 0;border-top:1px solid var(--line);font-size:12px}.moderation-item button{margin-top:8px;border:0;background:var(--green);color:#fff;padding:7px 10px;border-radius:7px;font-size:11px}
+@media(max-width:900px){.topbar nav{display:none}.menu{display:block}.hero,.contribute,.map-panel{grid-template-columns:1fr}.hero{padding-top:55px}.stats{grid-template-columns:1fr 1fr}.language-grid{grid-template-columns:1fr 1fr}.workflow{grid-template-columns:1fr 1fr}.section-head{display:block}.section-head p{margin-top:10px}}
+@media(max-width:600px){.topbar{padding:0 4%}.hero,.section{padding:55px 5%}.hero-card{display:none}h1{font-size:48px}.stats{padding:20px 5%}.stats div{padding:12px;border-bottom:1px solid var(--line)}.language-grid,.dictionary,.workflow{grid-template-columns:1fr}.province-grid{grid-template-columns:1fr 1fr;min-height:auto;padding:18px}.filters,.dictionary-bar{display:grid;grid-template-columns:1fr}.two{grid-template-columns:1fr}.principles{grid-template-columns:1fr}footer{display:block}.hero-card-footer{display:block}.hero-card-footer span{margin-top:5px;display:block}}
+'''
+
+script = r'''const languages=[
+{name:"Changana",region:"Sul",province:"Gaza · Maputo · Maputo Cidade",about:"Língua bantu com forte presença no sul de Moçambique e diferentes variantes locais."},
+{name:"Macua / Makhuwa",region:"Norte",province:"Nampula · Cabo Delgado · Niassa",about:"Uma das principais línguas do norte, com ampla diversidade interna e variedades regionais."},
+{name:"Sena",region:"Centro",province:"Sofala · Tete · Zambézia",about:"Língua bantu de grande presença no vale do Zambeze e no centro do país."},
+{name:"Chuabo",region:"Centro",province:"Zambézia",about:"Língua falada sobretudo na Zambézia, com repertório cultural e oral rico."},
+{name:"Ndau",region:"Centro",province:"Sofala · Manica",about:"Língua bantu do centro, com variedades e comunidades em Moçambique e países vizinhos."},
+{name:"Ronga",region:"Sul",province:"Maputo",about:"Língua bantu do sul, historicamente associada à região de Maputo."},
+{name:"Yao",region:"Norte",province:"Niassa · Cabo Delgado",about:"Língua de comunidades do norte, com presença transfronteiriça na África Austral."},
+{name:"Lomwe",region:"Norte",province:"Zambézia · Nampula",about:"Língua bantu do norte-centro, com forte presença na região da Zambézia e Nampula."},
+{name:"Tswa",region:"Sul",province:"Inhambane · Gaza",about:"Variedade bantu presente no sul de Moçambique."}
+];
+let words=[
+{term:"Mbhaka",lang:"Ndau",meaning:"gato",province:"Sofala",status:"Verificado",source:"Registo comunitário"},
+{term:"Ngwena",lang:"Ndau",meaning:"crocodilo",province:"Sofala",status:"Em análise",source:"Contribuição comunitária"},
+{term:"Gonjo",lang:"Ndau",meaning:"rato",province:"Manica",status:"Verificado",source:"Registo inicial"},
+{term:"Shuro",lang:"Ndau",meaning:"coelho",province:"Sofala",status:"Pendente",source:"A confirmar com comunidade"},
+{term:"Kanimambo",lang:"Changana",meaning:"obrigado / agradecimento",province:"Gaza",status:"Verificado",source:"Registo inicial"},
+{term:"Mhoro",lang:"Changana",meaning:"saudação",province:"Maputo",status:"Em análise",source:"Contribuição comunitária"},
+{term:"Mwane",lang:"Macua / Makhuwa",meaning:"forma de tratamento",province:"Nampula",status:"Em análise",source:"Registo comunitário"},
+{term:"Thaphata",lang:"Sena",meaning:"expressão registada para investigação",province:"Sofala",status:"Pendente",source:"A confirmar"}
+];
+const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
+function fillSelects(){let opts=languages.map(x=>`<option>${x.name}</option>`).join("");$("#langFilter").insertAdjacentHTML("beforeend",opts);$("#contribLanguage").insertAdjacentHTML("beforeend",opts)}
+function renderLanguages(){let q=$("#languageSearch").value.toLowerCase(),r=$("#regionFilter").value;let data=languages.filter(x=>(!r||x.region===r)&&(!q||x.name.toLowerCase().includes(q)));$("#languageGrid").innerHTML=data.map(x=>`<article class="lang-card"><div class="lang-top"><div><span class="eyebrow">${x.region.toUpperCase()}</span><h3>${x.name}</h3></div><span class="region">${x.region}</span></div><p>${x.about}</p><div class="lang-meta">📍 ${x.province}</div><button onclick="showLanguage('${x.name}')">Abrir perfil →</button></article>`).join("")||"<p>Nenhuma língua encontrada.</p>"}
+function renderDictionary(){let q=$("#wordSearch").value.toLowerCase(),l=$("#langFilter").value,s=$("#statusFilter").value;let data=words.filter(x=>(!q||[x.term,x.meaning,x.lang,x.province].join(" ").toLowerCase().includes(q))&&(!l||x.lang===l)&&(!s||x.status===s));$("#dictionary").innerHTML=data.map(x=>`<article class="word-card"><div class="word-head"><span class="word">${x.term}</span><span class="status ${x.status==="Verificado"?"verified":x.status==="Pendente"?"pending":"review"}">${x.status}</span></div><div class="meaning">${x.meaning}</div><div class="word-meta">${x.lang} · ${x.province} · ${x.source}</div><div class="word-actions"><button class="linkbtn" onclick="listen('${x.term}')">🔊 Ouvir</button><button class="linkbtn" onclick="correct('${x.term}')">✏ Sugerir correcção</button></div></article>`).join("")||"<p>Nenhum registo encontrado.</p>"}
+function listen(t){if("speechSynthesis"in window){speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(t);u.lang="pt-MZ";speechSynthesis.speak(u)}}
+function showLanguage(name){let x=languages.find(a=>a.name===name);$("#entryContent").innerHTML=`<span class="eyebrow">${x.region.toUpperCase()}</span><h2>${x.name}</h2><p>${x.about}</p><hr><p><b>Presença:</b> ${x.province}</p><p><b>O que poderá encontrar:</b> palavras, expressões, variantes, pronúncias, provérbios e referências comunitárias.</p><button class="btn primary" onclick="location.hash='dicionario';closeModals()">Explorar dicionário →</button>`;$("#entryModal").classList.add("open")}
+function correct(term){$("#correctionForm").term.value=term;$("#correctionMsg").textContent="";$("#correctionModal").classList.add("open")}
+function closeModals(){$$(".modal").forEach(m=>m.classList.remove("open"))}
+function activity(){let a=JSON.parse(localStorage.getItem("almActivity")||"[]");$("#activity").innerHTML=(a.length?a: [{text:"Registo inicial do Atlas preparado para colaboração.",time:"Hoje"},{text:"Interface V2 criada com estados de validação.",time:"Hoje"},{text:"Sistema de correcções preparado.",time:"Hoje"}]).slice(0,8).map(x=>`<div class="activity-item"><b>${x.text}</b><span>${x.time}</span></div>`).join("")}
+function moderation(){let a=JSON.parse(localStorage.getItem("almPending")||"[]");$("#pendingCount").textContent=a.length;$("#moderationList").innerHTML=a.length?a.map((x,i)=>`<div class="moderation-item"><b>${x.term}</b> — ${x.meaning}<br><span>${x.language} · ${x.province} · por ${x.name}</span><br><button onclick="approve(${i})">Marcar como verificado</button></div>`).join(""):"<p>Nenhuma contribuição local pendente.</p>"}
+function approve(i){let a=JSON.parse(localStorage.getItem("almPending")||"[]"),x=a.splice(i,1)[0];words.unshift({term:x.term,lang:x.language,meaning:x.meaning,province:x.province,status:"Verificado",source:"Contribuição comunitária"});localStorage.setItem("almPending",JSON.stringify(a));renderDictionary();moderation();activity()}
+$$(".province").forEach(b=>b.onclick=()=>{$$(".province").forEach(x=>x.classList.remove("active"));b.classList.add("active");let p=b.dataset.province;$("#selectedProvince").textContent=p;let ls=languages.filter(x=>x.province.includes(p)).map(x=>`<span>${x.name}</span>`);$("#provinceTags").innerHTML=ls.length?ls.join(""):"<span>Registos em construção</span>"});
+$("#provinceExplore").onclick=()=>location.hash="dicionario";
+$("#languageSearch").oninput=renderLanguages;$("#regionFilter").onchange=renderLanguages;$("#wordSearch").oninput=renderDictionary;$("#langFilter").onchange=renderDictionary;$("#statusFilter").onchange=renderDictionary;
+$("#contributionForm").onsubmit=e=>{e.preventDefault();let f=new FormData(e.target),x={name:f.get("name"),language:f.get("language"),province:f.get("province"),term:f.get("term"),meaning:f.get("meaning"),context:f.get("context"),source:f.get("source")};let a=JSON.parse(localStorage.getItem("almPending")||"[]");a.unshift(x);localStorage.setItem("almPending",JSON.stringify(a));let act=JSON.parse(localStorage.getItem("almActivity")||"[]");act.unshift({text:`Nova contribuição: ${x.term} (${x.language})`,time:"Agora"});localStorage.setItem("almActivity",JSON.stringify(act));$("#formMsg").textContent="Obrigado. A contribuição foi enviada para revisão.";e.target.reset();moderation();activity()};
+$("#correctionForm").onsubmit=e=>{e.preventDefault();$("#correctionMsg").textContent="Sugestão registada para análise. Obrigado por ajudar a melhorar o Atlas.";setTimeout(closeModals,900)};
+$$("[data-open]").forEach(b=>b.onclick=()=>{$("#"+b.dataset.open).classList.add("open");moderation()});$$(".close").forEach(b=>b.onclick=closeModals);$$(".modal").forEach(m=>m.onclick=e=>{if(e.target===m)closeModals()});
+$(".menu").onclick=()=>document.querySelector(".topbar nav").classList.toggle("mobile-open");
+fillSelects();renderLanguages();renderDictionary();activity();
+'''
+readme = r'''# ALM — Atlas Linguístico de Moçambique V2
+
+Interface completa do protótipo V2 do Atlas Linguístico de Moçambique.
+
+## O que já está incluído
+- Página inicial e identidade visual inspirada nas cores da bandeira de Moçambique.
+- Mapa/províncias interactivo.
+- Catálogo de línguas com pesquisa e filtro.
+- Dicionário colaborativo com estados: Verificado, Em análise e Pendente.
+- Pronúncia pelo SpeechSynthesis do navegador.
+- Formulário de contribuição.
+- Sistema de sugestão de correcção.
+- Histórico/actividade.
+- Painel de administração de demonstração.
+- Armazenamento local para demonstrar o fluxo.
+
+## Importante
+Esta V2 é uma **interface funcional de demonstração**. As contribuições ainda ficam no navegador através de `localStorage`. Para lançamento público real, a próxima etapa é ligar a aplicação a uma base de dados e autenticação (por exemplo, Supabase), implementar armazenamento de áudio, moderação real, perfis, fontes e histórico persistente.
+
+## GitHub Pages
+1. Crie um repositório público.
+2. Envie `index.html`, `style.css` e `script.js`.
+3. Vá a Settings → Pages.
+4. Em Build and deployment escolha Deploy from a branch.
+5. Branch `main` e pasta `/ (root)`.
+6. Guarde e aguarde a publicação.
+'''
+for name, content in [("index.html",index),("style.css",style),("script.js",script),("README.md",readme)]:
+    (base/name).write_text(content, encoding="utf-8")
+
+zip_path=Path("/mnt/data/atlas-linguistico-mocambique-v2.zip")
+with zipfile.ZipFile(zip_path,"w",zipfile.ZIP_DEFLATED) as z:
+    for p in base.iterdir():
+        z.write(p, arcname=p.name)
+print(f"V2 criada: {zip_path}\nFicheiros: {[p.name for p in base.iterdir()]}")
