@@ -584,18 +584,6 @@ Pode copiar e substituir todo o seu código anterior por este:
             if (audioSrc) {
                 const audio = new Audio(audioSrc);
                 audio.play();
-            } else {
-                // Som de bipe sintético caso o utilizador não tenha gravado áudio para este termo
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(520, audioCtx.currentTime);
-                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
                 
                 oscillator.start();
                 oscillator.stop(audioCtx.currentTime + 0.25);
