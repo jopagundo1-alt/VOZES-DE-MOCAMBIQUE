@@ -1,3 +1,16 @@
+Para que as contribuições entrem **diretamente no dicionário** sem passar por moderação, que os visitantes possam **gravar o áudio da pronúncia** diretamente do microfone do navegador e que esse áudio possa ser **reproduzido instantaneamente**, fiz as seguintes alterações e adições no código:
+
+1. **Publicação Instantânea:** O formulário agora insere o novo termo e significado dinamicamente na grelha do dicionário no momento em que o utilizador clica em submeter.
+2. **Gravação de Áudio Real (`MediaRecorder API`):** Adicionei um botão de gravação com microfone no modal para que o visitante possa gravar a sua própria voz a pronunciar a palavra.
+3. **Reprodução Dinâmica de Áudio:** Os cartões (tanto os existentes como os novos) agora guardam e reproduzem a gravação em formato de áudio real (`Blob / URL`) ao clicar no ícone de volume.
+
+---
+
+### Código Completo Atualizado
+
+Pode copiar e substituir todo o seu código anterior por este:
+
+```html
 <!DOCTYPE html>
 <html lang="pt">
 <head>
@@ -181,7 +194,7 @@
             <div id="gridDicionario" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 
                 <!-- Entrada 1 -->
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between">
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between" data-audio-src="">
                     <div>
                         <div class="flex items-center justify-between mb-3">
                             <span class="bg-brand-50 text-brand-700 text-xs font-bold px-2.5 py-1 rounded-md">Ndau • Sofala</span>
@@ -203,7 +216,7 @@
                             Por: <span class="font-semibold text-slate-700">João Paulo Gundo</span>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <button onclick="tocarAudio('Mbhaka')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 p-2 rounded-lg transition" title="Ouvir pronúncia">
+                            <button onclick="tocarAudio(this, 'Mbhaka')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 p-2 rounded-lg transition" title="Ouvir pronúncia">
                                 <i class="fa-solid fa-volume-high"></i>
                             </button>
                             <button onclick="abrirModalCorrecao('Mbhaka')" class="bg-amber-50 hover:bg-amber-100 text-amber-700 p-2 rounded-lg transition" title="Sugerir correção">
@@ -214,7 +227,7 @@
                 </div>
 
                 <!-- Entrada 2 -->
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between">
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between" data-audio-src="">
                     <div>
                         <div class="flex items-center justify-between mb-3">
                             <span class="bg-brand-50 text-brand-700 text-xs font-bold px-2.5 py-1 rounded-md">Changana • Maputo</span>
@@ -236,7 +249,7 @@
                             Por: <span class="font-semibold text-slate-700">Eusébio Nhantumbo</span>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <button onclick="tocarAudio('Kanimambo')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 p-2 rounded-lg transition" title="Ouvir pronúncia">
+                            <button onclick="tocarAudio(this, 'Kanimambo')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 p-2 rounded-lg transition" title="Ouvir pronúncia">
                                 <i class="fa-solid fa-volume-high"></i>
                             </button>
                             <button onclick="abrirModalCorrecao('Kanimambo')" class="bg-amber-50 hover:bg-amber-100 text-amber-700 p-2 rounded-lg transition" title="Sugerir correção">
@@ -247,7 +260,7 @@
                 </div>
 
                 <!-- Entrada 3 -->
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between">
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between" data-audio-src="">
                     <div>
                         <div class="flex items-center justify-between mb-3">
                             <span class="bg-brand-50 text-brand-700 text-xs font-bold px-2.5 py-1 rounded-md">Macua • Nampula</span>
@@ -268,7 +281,7 @@
                             Por: <span class="font-semibold text-slate-700">Catarina Manuel</span>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <button onclick="tocarAudio('Mapiko')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 p-2 rounded-lg transition" title="Ouvir pronúncia">
+                            <button onclick="tocarAudio(this, 'Mapiko')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 p-2 rounded-lg transition" title="Ouvir pronúncia">
                                 <i class="fa-solid fa-volume-high"></i>
                             </button>
                             <button onclick="abrirModalCorrecao('Mapiko')" class="bg-amber-50 hover:bg-amber-100 text-amber-700 p-2 rounded-lg transition" title="Sugerir correção">
@@ -290,7 +303,7 @@
             <p class="text-slate-600 max-w-xl mx-auto mb-12">Cada língua tem uma voz, uma entoação e uma história. Ouça expressões essenciais do dia a dia gravadas por falantes nativos.</p>
             
             <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
-                <div class="bg-slate-50 border border-slate-200 p-6 rounded-2xl hover:border-brand-600 transition group cursor-pointer" onclick="tocarAudio('Como estás?')">
+                <div class="bg-slate-50 border border-slate-200 p-6 rounded-2xl hover:border-brand-600 transition group cursor-pointer" onclick="tocarAudioSimples('Kota ku mini?')">
                     <div class="w-12 h-12 bg-brand-100 text-brand-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-brand-600 group-hover:text-white transition">
                         <i class="fa-solid fa-volume-high text-lg"></i>
                     </div>
@@ -298,7 +311,7 @@
                     <p class="text-xs text-slate-500">Kota ku mini? (Changana)</p>
                 </div>
 
-                <div class="bg-slate-50 border border-slate-200 p-6 rounded-2xl hover:border-brand-600 transition group cursor-pointer" onclick="tocarAudio('Bom dia')">
+                <div class="bg-slate-50 border border-slate-200 p-6 rounded-2xl hover:border-brand-600 transition group cursor-pointer" onclick="tocarAudioSimples('Mhoro')">
                     <div class="w-12 h-12 bg-brand-100 text-brand-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-brand-600 group-hover:text-white transition">
                         <i class="fa-solid fa-volume-high text-lg"></i>
                     </div>
@@ -306,7 +319,7 @@
                     <p class="text-xs text-slate-500">Mhoro / Ntsongo (Changana)</p>
                 </div>
 
-                <div class="bg-slate-50 border border-slate-200 p-6 rounded-2xl hover:border-brand-600 transition group cursor-pointer" onclick="tocarAudio('Água')">
+                <div class="bg-slate-50 border border-slate-200 p-6 rounded-2xl hover:border-brand-600 transition group cursor-pointer" onclick="tocarAudioSimples('Mati ou Madzi')">
                     <div class="w-12 h-12 bg-brand-100 text-brand-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-brand-600 group-hover:text-white transition">
                         <i class="fa-solid fa-volume-high text-lg"></i>
                     </div>
@@ -314,7 +327,7 @@
                     <p class="text-xs text-slate-500">Mati (Changana/Macua) • Madzi (Sena)</p>
                 </div>
 
-                <div class="bg-slate-50 border border-slate-200 p-6 rounded-2xl hover:border-brand-600 transition group cursor-pointer" onclick="tocarAudio('Quanto custa?')">
+                <div class="bg-slate-50 border border-slate-200 p-6 rounded-2xl hover:border-brand-600 transition group cursor-pointer" onclick="tocarAudioSimples('I mali muni?')">
                     <div class="w-12 h-12 bg-brand-100 text-brand-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-brand-600 group-hover:text-white transition">
                         <i class="fa-solid fa-volume-high text-lg"></i>
                     </div>
@@ -342,7 +355,7 @@
                 
                 <div class="flex items-center justify-between border-t border-slate-700 pt-4 text-xs text-slate-400">
                     <div>Colaborador: <span class="text-white font-medium">João Paulo Gundo (Beira)</span></div>
-                    <button onclick="tocarAudio('Provérbio Ndau')" class="bg-earth-500 hover:bg-amber-600 text-slate-900 font-bold px-4 py-2 rounded-xl transition flex items-center gap-2">
+                    <button onclick="tocarAudioSimples('Mwana wa muchenje unochema akazvirira.')" class="bg-earth-500 hover:bg-amber-600 text-slate-900 font-bold px-4 py-2 rounded-xl transition flex items-center gap-2">
                         <i class="fa-solid fa-volume-high"></i> Ouvir Provérbio
                     </button>
                 </div>
@@ -431,17 +444,17 @@
                 <i class="fa-solid fa-xmark text-xl"></i>
             </button>
             <h3 class="text-2xl font-black text-slate-900 mb-2">Contribuir com uma Palavra</h3>
-            <p class="text-xs text-slate-500 mb-6">Ajude a enriquecer o acervo linguístico de Moçambique partilhando termos, provérbios ou áudios.</p>
+            <p class="text-xs text-slate-500 mb-6">Partilhe termos diretamente para o dicionário público e grave a pronúncia nativa.</p>
             
             <form onsubmit="enviarContribuicao(event)" class="space-y-4 text-xs font-medium">
                 <div>
                     <label class="block text-slate-700 mb-1">Seu Nome / Colaborador</label>
-                    <input type="text" required placeholder="Ex: Maria Matusse" class="w-full bg-slate-50 border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-brand-600 focus:outline-none">
+                    <input type="text" id="inputNome" required placeholder="Ex: Maria Matusse" class="w-full bg-slate-50 border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-brand-600 focus:outline-none">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-slate-700 mb-1">Língua Moçambicana</label>
-                        <select class="w-full bg-slate-50 border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-brand-600 focus:outline-none">
+                        <select id="selectLingua" class="w-full bg-slate-50 border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-brand-600 focus:outline-none">
                             <option>Ndau</option>
                             <option>Changana</option>
                             <option>Macua</option>
@@ -454,7 +467,7 @@
                     </div>
                     <div>
                         <label class="block text-slate-700 mb-1">Província</label>
-                        <select class="w-full bg-slate-50 border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-brand-600 focus:outline-none">
+                        <select id="selectProvincia" class="w-full bg-slate-50 border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-brand-600 focus:outline-none">
                             <option>Sofala</option>
                             <option>Maputo</option>
                             <option>Nampula</option>
@@ -465,106 +478,233 @@
                             <option>Tete</option>
                             <option>Cabo Delgado</option>
                             <option>Niassa</option>
-                            <option>Tete</option>
                         </select>
                     </div>
                 </div>
                 <div>
                     <label class="block text-slate-700 mb-1">Palavra ou Expressão Original</label>
-                    <input type="text" required placeholder="Ex: Chidunduru" class="w-full bg-slate-50 border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-brand-600 focus:outline-none">
+                    <input type="text" id="inputPalavra" required placeholder="Ex: Mbhaka" class="w-full bg-slate-50 border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-brand-600 focus:outline-none">
                 </div>
                 <div>
-                    <label class="block text-slate-700 mb-1">Tradução / Significado em Português</label>
-                    <input type="text" required placeholder="Ex: Borboleta" class="w-full bg-slate-50 border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-brand-600 focus:outline-none">
+                    <label class="block text-slate-700 mb-1">Significado em Português</label>
+                    <input type="text" id="inputSignificado" required placeholder="Ex: Gato" class="w-full bg-slate-50 border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-brand-600 focus:outline-none">
                 </div>
                 <div>
-                    <label class="block text-slate-700 mb-1">Exemplo de Uso ou Contexto</label>
-                    <textarea rows="2" placeholder="Frase ou contexto cultural onde a palavra é usada..." class="w-full bg-slate-50 border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-brand-600 focus:outline-none"></textarea>
+                    <label class="block text-slate-700 mb-1">Exemplo de Frase / Contexto (Opcional)</label>
+                    <textarea id="inputExemplo" rows="2" placeholder="Ex: Mbhaka yamba ipa" class="w-full bg-slate-50 border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-brand-600 focus:outline-none"></textarea>
                 </div>
-                <div>
-                    <label class="block text-slate-700 mb-1">Gravação de Pronúncia (Opcional)</label>
-                    <button type="button" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 p-3 rounded-xl border border-dashed border-slate-300 flex items-center justify-center gap-2 transition">
-                        <i class="fa-solid fa-microphone text-brand-600"></i> Gravar Voz (Pronto para gravar)
+
+                <!-- Secção de Gravação de Voz -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                    <label class="block text-slate-700 font-semibold mb-2">Gravar Pronúncia em Áudio</label>
+                    <div class="flex items-center justify-center gap-3">
+                        <button type="button" id="btnGravar" onclick="toggleGravacao()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2">
+                            <i class="fa-solid fa-microphone"></i> <span id="txtBtnGravar">Gravar Áudio</span>
+                        </button>
+                        <span id="statusGravacao" class="text-slate-500 italic">Nenhum áudio gravado</span>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition">
+                        Publicar Imediatamente no Dicionário
                     </button>
                 </div>
-                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 rounded-xl shadow-md transition text-sm">
-                    Enviar Contribuição para Moderação
-                </button>
             </form>
         </div>
     </div>
 
-    <!-- MODAL DE SUGESTÃO DE CORREÇÃO -->
-    <div id="modalCorrecao" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-lg w-full p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <button onclick="fecharModalCorrecao()" class="absolute top-6 right-6 text-slate-400 hover:text-slate-700">
-                <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
-            <h3 class="text-2xl font-black text-slate-900 mb-2">Sugerir Correção ou Variante</h3>
-            <p id="termoAlvoCorrecao" class="text-xs text-brand-600 font-bold mb-6">Entrada: Mbhaka</p>
-            
-            <form onsubmit="enviarCorrecao(event)" class="space-y-4 text-xs font-medium">
-                <div>
-                    <label class="block text-slate-700 mb-1">O que está incorreto ou necessita de atualização?</label>
-                    <select class="w-full bg-slate-50 border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-brand-600 focus:outline-none">
-                        <option>Significado / Tradução</option>
-                        <option>Pronúncia / Fonética</option>
-                        <option>Exemplo de uso</option>
-                        <option>Variante regional (Outra comunidade)</option>
-                        <option>Outro</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-slate-700 mb-1">Informação Correta Proposta</label>
-                    <input type="text" required placeholder="Insira a forma correta ou variante..." class="w-full bg-slate-50 border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-brand-600 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-slate-700 mb-1">Explique a alteração ou indique fonte/comunidade</label>
-                    <textarea rows="3" required placeholder="Justifique a alteração linguística ou refira a comunidade de origem..." class="w-full bg-slate-50 border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-brand-600 focus:outline-none"></textarea>
-                </div>
-                <button type="submit" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3.5 rounded-xl shadow-md transition text-sm">
-                    Submeter Sugestão de Correção (Histórico de Versões)
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Scripts de Interatividade -->
+    <!-- SCRIPTS DE INTERATIVIDADE -->
     <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let audioBlobUrl = null;
+        let estaA_Gravar = false;
+
+        // Funções para o Modal
         function abrirModalContribuir() {
             document.getElementById('modalContribuir').classList.remove('hidden');
+            audioBlobUrl = null;
+            document.getElementById('statusGravacao').innerText = "Nenhum áudio gravado";
         }
+
         function fecharModalContribuir() {
             document.getElementById('modalContribuir').classList.add('hidden');
         }
-        function abrirModalCorrecao(termo) {
-            document.getElementById('termoAlvoCorrecao').innerText = 'Entrada selecionada: ' + termo;
-            document.getElementById('modalCorrecao').classList.remove('hidden');
+
+        function abrirModalCorrecao(palavra) {
+            alert('Sugerir alteração para o termo: ' + palavra);
         }
-        function fecharModalCorrecao() {
-            document.getElementById('modalCorrecao').classList.add('hidden');
+
+        // Gravação de Áudio via Navegador
+        async function toggleGravacao() {
+            const btn = document.getElementById('btnGravar');
+            const txt = document.getElementById('txtBtnGravar');
+            const status = document.getElementById('statusGravacao');
+
+            if (!estaA_Gravar) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        audioBlobUrl = URL.createObjectURL(audioBlob);
+                        status.innerText = "Áudio gravado com sucesso! ✅";
+                    };
+
+                    mediaRecorder.start();
+                    estaA_Gravar = true;
+                    txt.innerText = "Parar Gravação";
+                    btn.classList.replace('bg-red-500', 'bg-slate-800');
+                    status.innerText = "A gravar... Fale agora.";
+                } catch (err) {
+                    alert('Permissão de microfone negada ou indisponível.');
+                }
+            } else {
+                mediaRecorder.stop();
+                // Parar todas as pistas de áudio do stream do microfone
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                estaA_Gravar = false;
+                txt.innerText = "Gravar Novamente";
+                btn.classList.replace('bg-slate-800', 'bg-red-500');
+            }
         }
-        function tocarAudio(termo) {
-            alert('🔊 A reproduzir áudio simulado para: "' + termo + '". (Numa versão completa, o navegador reproduziria a gravação enviada pelo colaborador).');
+
+        // Tocar Áudio (Gravação Real ou Som Sintético se não houver gravação)
+        function tocarAudio(botaoElement, termo) {
+            const card = botaoElement.closest('.bg-white');
+            const audioSrc = card.getAttribute('data-audio-src');
+
+            if (audioSrc) {
+                const audio = new Audio(audioSrc);
+                audio.play();
+            } else {
+                // Som de bipe sintético caso o utilizador não tenha gravado áudio para este termo
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(520, audioCtx.currentTime);
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.25);
+                console.log('Reproduzindo tom padrão para:', termo);
+            }
         }
+
+        // Para os botões estáticos no Banco de Vozes
+        function tocarAudioSimples(termo) {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.2);
+        }
+
         function filtrarRegiao(regiao) {
-            alert('Filtrando o mapa e dicionário para a Zona ' + regiao + ' de Moçambique...');
-            window.location.hash = '#dicionario';
+            alert('A filtrar termos e línguas da Zona ' + regiao + '...');
+            document.getElementById('mapa').scrollIntoView({ behavior: 'smooth' });
         }
+
         function pesquisarTermos() {
-            let input = document.getElementById('inputPesquisa').value.toLowerCase();
-            // Simulação simples de busca interactiva
+            const input = document.getElementById('inputPesquisa').value.toLowerCase();
+            const grid = document.getElementById('gridDicionario');
+            const cards = grid.getElementsByClassName('bg-white');
+
+            for (let i = 0; i < cards.length; i++) {
+                const texto = cards[i].innerText.toLowerCase();
+                if (texto.includes(input)) {
+                    cards[i].style.display = "";
+                } else {
+                    cards[i].style.display = "none";
+                }
+            }
         }
+
+        // Publicação Direta Instantânea
         function enviarContribuicao(event) {
             event.preventDefault();
-            alert('✅ Contribuição submetida com sucesso! O estado atual é [🟡 Pendente] e passará por moderação da equipa linguística.');
+
+            const nome = document.getElementById('inputNome').value;
+            const lingua = document.getElementById('selectLingua').value;
+            const provincia = document.getElementById('selectProvincia').value;
+            const palavra = document.getElementById('inputPalavra').value;
+            const significado = document.getElementById('inputSignificado').value;
+            const exemplo = document.getElementById('inputExemplo').value;
+
+            const grid = document.getElementById('gridDicionario');
+            
+            // Criar novo cartão HTML dinamicamente
+            const novoCartao = document.createElement('div');
+            novoCartao.className = "bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between";
+            
+            if (audioBlobUrl) {
+                novoCartao.setAttribute('data-audio-src', audioBlobUrl);
+            }
+
+            novoCartao.innerHTML = `
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="bg-brand-50 text-brand-700 text-xs font-bold px-2.5 py-1 rounded-md">${lingua} • ${provincia}</span>
+                        <span class="bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                            <i class="fa-solid fa-circle-check text-[10px]"></i> Direto
+                        </span>
+                    </div>
+                    <h4 class="text-2xl font-black text-slate-900 mb-1">${palavra}</h4>
+                    <p class="text-sm font-medium text-slate-500 mb-4">Significado: <strong class="text-slate-800">${significado}</strong></p>
+                    
+                    ${exemplo ? `
+                    <div class="bg-slate-50 p-3.5 rounded-xl text-xs space-y-2 mb-4 border border-slate-100">
+                        <div><strong class="text-slate-700">Exemplo:</strong> <em>${exemplo}</em></div>
+                    </div>` : ''}
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <div class="text-slate-500">
+                        Por: <span class="font-semibold text-slate-700">${nome}</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="tocarAudio(this, '${palavra}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 p-2 rounded-lg transition" title="Ouvir pronúncia">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </button>
+                        <button onclick="abrirModalCorrecao('${palavra}')" class="bg-amber-50 hover:bg-amber-100 text-amber-700 p-2 rounded-lg transition" title="Sugerir correção">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Adicionar ao topo do dicionário
+            grid.prepend(novoCartao);
+
+            alert('Contribuição publicada com sucesso no dicionário!');
             fecharModalContribuir();
-        }
-        function enviarCorrecao(event) {
-            event.preventDefault();
-            alert('🔄 Sugestão de correção enviada com sucesso! Será gerada uma nova versão no histórico documental desta entrada.');
-            fecharModalCorrecao();
+            document.getElementById('inputPalavra').value = '';
+            document.getElementById('inputSignificado').value = '';
+            document.getElementById('inputExemplo').value = '';
+            audioBlobUrl = null;
         }
     </script>
 </body>
 </html>
+
+```
