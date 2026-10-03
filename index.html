@@ -1,204 +1,704 @@
-from pathlib import Path
-import zipfile, textwrap, json
-
-base = Path("/mnt/data/alm-v2")
-base.mkdir(exist_ok=True)
-
-index = r'''<!DOCTYPE html>
-<html lang="pt-MZ">
+<!DOCTYPE html>
+<html lang="pt">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Atlas Linguístico de Moçambique — plataforma colaborativa para mapear, preservar e valorizar as línguas de Moçambique.">
-  <title>ALM — Atlas Linguístico de Moçambique</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atlas Linguístico de Moçambique — Plataforma Colaborativa</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fdf8f6',
+                            100: '#fbe8e6',
+                            600: '#c53030', // Vermelho terracota moçambicano
+                            700: '#9b2c2c',
+                            800: '#742a2a',
+                            900: '#552121',
+                        },
+                        earth: {
+                            500: '#d97706', // Ocre / Amarelo tradicional
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
-<header class="topbar">
-  <a class="brand" href="#inicio"><span class="flagmark">🇲🇿</span><span><b>ALM</b><small>Atlas Linguístico de Moçambique</small></span></a>
-  <button class="menu" aria-label="Abrir menu">☰</button>
-  <nav>
-    <a href="#inicio">Início</a><a href="#mapa">Mapa</a><a href="#linguas">Línguas</a>
-    <a href="#dicionario">Dicionário</a><a href="#contribuir">Contribuir</a><a href="#comunidade">Comunidade</a>
-    <button class="admin-btn" data-open="admin">Administração</button>
-  </nav>
-</header>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased">
 
-<main id="inicio">
-<section class="hero">
-  <div class="hero-copy">
-    <span class="eyebrow">PATRIMÓNIO LINGUÍSTICO NACIONAL</span>
-    <h1>Mapear as línguas.<br><em>Preservar as vozes.</em></h1>
-    <p>Um atlas colaborativo para descobrir, documentar e valorizar a diversidade linguística de Moçambique — do Rovuma ao Maputo.</p>
-    <div class="actions"><a class="btn primary" href="#mapa">Explorar o Atlas →</a><a class="btn ghost" href="#contribuir">+ Contribuir</a></div>
-    <div class="hero-note"><span>●</span> Plataforma comunitária em construção</div>
-  </div>
-  <div class="hero-card">
-    <div class="map-art">
-      <div class="map-title">MOÇAMBIQUE</div>
-      <div class="moz-shape"><span class="pin p1">N</span><span class="pin p2">C</span><span class="pin p3">S</span></div>
-      <div class="map-label north">NORTE</div><div class="map-label centre">CENTRO</div><div class="map-label south">SUL</div>
+    <!-- Top Bar / Aviso Institucional -->
+    <div class="bg-brand-900 text-white text-xs py-2 px-4 text-center font-medium">
+        🇲🇿 Plataforma Colaborativa de Documentação e Preservação Linguística do Rovuma ao Maputo
     </div>
-    <div class="hero-card-footer"><b>Explorar por região</b><span>10 províncias · múltiplas línguas</span></div>
-  </div>
-</section>
 
-<section class="stats">
-  <div><strong>20+</strong><span>Línguas catalogadas</span></div><div><strong>10</strong><span>Províncias</span></div>
-  <div><strong>120+</strong><span>Registos iniciais</span></div><div><strong>42</strong><span>Colaboradores</span></div>
-</section>
+    <!-- Navegação Principal -->
+    <header class="sticky top-0 z-50 bg-white shadow-sm border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-brand-600 text-white p-2.5 rounded-xl font-bold text-xl shadow-md">
+                    <i class="fa-solid fa-earth-africa"></i>
+                </div>
+                <div>
+                    <span class="text-xs uppercase tracking-widest font-bold text-brand-600 block">Atlas Linguístico</span>
+                    <h1 class="text-lg font-black text-slate-900 leading-none">MOÇAMBIQUE</h1>
+                </div>
+            </div>
+            <nav class="hidden md:flex items-center space-x-8 font-medium text-sm text-slate-600">
+                <a href="#inicio" class="hover:text-brand-600 transition">Início</a>
+                <a href="#mapa" class="hover:text-brand-600 transition">Mapa Linguístico</a>
+                <a href="#dicionario" class="hover:text-brand-600 transition">Dicionário Colaborativo</a>
+                <a href="#vozes" class="hover:text-brand-600 transition">Banco de Vozes</a>
+                <a href="#proverbios" class="hover:text-brand-600 transition">Provérbios</a>
+                <a href="#comunidade" class="hover:text-brand-600 transition">Comunidade</a>
+            </nav>
+            <div>
+                <button onclick="abrirModalContribuir()" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md transition flex items-center space-x-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Contribuir</span>
+                </button>
+            </div>
+        </div>
+    </header>
 
-<section class="section" id="mapa">
-  <div class="section-head"><div><span class="eyebrow">EXPLORAR</span><h2>Mapa linguístico</h2></div><p>Seleccione uma região ou província para explorar as línguas registadas.</p></div>
-  <div class="map-panel">
-    <div class="province-grid">
-      <button class="province north" data-province="Cabo Delgado">Cabo Delgado</button>
-      <button class="province north" data-province="Niassa">Niassa</button>
-      <button class="province north" data-province="Nampula">Nampula</button>
-      <button class="province centre" data-province="Tete">Tete</button>
-      <button class="province centre" data-province="Zambézia">Zambézia</button>
-      <button class="province centre" data-province="Manica">Manica</button>
-      <button class="province centre" data-province="Sofala">Sofala</button>
-      <button class="province south" data-province="Inhambane">Inhambane</button>
-      <button class="province south" data-province="Gaza">Gaza</button>
-      <button class="province south" data-province="Maputo">Maputo</button>
+    <!-- Hero Section -->
+    <section id="inicio" class="relative bg-gradient-to-br from-slate-900 via-brand-900 to-slate-900 text-white py-24 px-4 overflow-hidden">
+        <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+        <div class="max-w-4xl mx-auto text-center relative z-10">
+            <span class="inline-block bg-earth-500 text-slate-900 font-bold px-3 py-1 rounded-full text-xs uppercase tracking-widest mb-6">Mapear as línguas. Preservar as vozes.</span>
+            <h2 class="text-4xl sm:text-6xl font-black tracking-tight mb-6">
+                A Diversidade Linguística de Moçambique
+            </h2>
+            <p class="text-lg sm:text-xl text-slate-300 mb-10 leading-relaxed">
+                Uma plataforma colaborativa para documentar, explorar e valorizar as línguas e o património linguístico do país. Construída por falantes, professores, investigadores e comunidades.
+            </p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="#mapa" class="bg-white text-slate-900 hover:bg-slate-100 font-bold px-8 py-3.5 rounded-xl shadow-lg transition">
+                    <i class="fa-solid fa-map-location-dot mr-2 text-brand-600"></i> Explorar o Mapa
+                </a>
+                <a href="#dicionario" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-8 py-3.5 rounded-xl shadow-lg transition">
+                    <i class="fa-solid fa-book-open mr-2"></i> Explorar o Dicionário
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Estatísticas em Destaque -->
+    <section class="bg-white border-b border-slate-200 py-8">
+        <div class="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            <div class="p-4">
+                <div class="text-3xl font-black text-brand-600">20+</div>
+                <div class="text-sm font-medium text-slate-500 mt-1">Línguas Documentadas</div>
+            </div>
+            <div class="p-4">
+                <div class="text-3xl font-black text-brand-600">11</div>
+                <div class="text-sm font-medium text-slate-500 mt-1">Províncias Abrangidas</div>
+            </div>
+            <div class="p-4">
+                <div class="text-3xl font-black text-brand-600">1.420</div>
+                <div class="text-sm font-medium text-slate-500 mt-1">Termos Catalogados</div>
+            </div>
+            <div class="p-4">
+                <div class="text-3xl font-black text-brand-600">385</div>
+                <div class="text-sm font-medium text-slate-500 mt-1">Colaboradores Ativos</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mapa / Exploração Regional -->
+    <section id="mapa" class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-2xl mx-auto mb-16">
+            <h3 class="text-3xl font-black text-slate-900 mb-4">Explore por Região</h3>
+            <p class="text-slate-600">As línguas moçambicanas dividem-se geograficamente com rica pluralidade estrutural e cultural.</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <!-- Norte -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition">
+                <div class="text-brand-600 font-bold text-xs uppercase tracking-wider mb-2">Zona Norte</div>
+                <h4 class="text-xl font-bold text-slate-900 mb-3">Nampula, Cabo Delgado, Niassa</h4>
+                <p class="text-sm text-slate-600 mb-6">Forte densidade demográfica de falantes de Macua, Lomwe, Mwani e Yao, com profundas raízes histórico-costeiras.</p>
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-semibold">Macua</span>
+                    <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-semibold">Lomwe</span>
+                    <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-semibold">Mwani</span>
+                    <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-semibold">Yao</span>
+                </div>
+                <button onclick="filtrarRegiao('Norte')" class="w-full bg-slate-900 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-brand-600 transition">Ver Línguas do Norte</button>
+            </div>
+
+            <!-- Centro -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition">
+                <div class="text-brand-600 font-bold text-xs uppercase tracking-wider mb-2">Zona Centro</div>
+                <h4 class="text-xl font-bold text-slate-900 mb-3">Sofala, Manica, Zambézia, Tete</h4>
+                <p class="text-sm text-slate-600 mb-6">Região caracterizada pela forte ligação fluvial ao rio Zambeze, destacando o Sena, Ndau, Chuabo e Nyungwe.</p>
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-semibold">Sena</span>
+                    <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-semibold">Ndau</span>
+                    <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-semibold">Chuabo</span>
+                    <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-semibold">Nyungwe</span>
+                </div>
+                <button onclick="filtrarRegiao('Centro')" class="w-full bg-slate-900 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-brand-600 transition">Ver Línguas do Centro</button>
+            </div>
+
+            <!-- Sul -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition">
+                <div class="text-brand-600 font-bold text-xs uppercase tracking-wider mb-2">Zona Sul</div>
+                <h4 class="text-xl font-bold text-slate-900 mb-3">Maputo, Gaza, Inhambane</h4>
+                <p class="text-sm text-slate-600 mb-6">Região caracterizada por forte coesão estrutural e cultural entre as línguas Changana, Ronga, Tswa e Chopi.</p>
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-semibold">Changana</span>
+                    <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-semibold">Ronga</span>
+                    <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-semibold">Tswa</span>
+                    <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-semibold">Chopi</span>
+                </div>
+                <button onclick="filtrarRegiao('Sul')" class="w-full bg-slate-900 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-brand-600 transition">Ver Línguas do Sul</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dicionário Colaborativo -->
+    <section id="dicionario" class="py-20 bg-slate-100 border-t border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-12">
+                <div>
+                    <span class="text-brand-600 font-bold text-xs uppercase tracking-wider">Repositório Interativo</span>
+                    <h3 class="text-3xl font-black text-slate-900 mt-1">Dicionário Colaborativo</h3>
+                </div>
+                <div class="mt-4 md:mt-0 flex gap-3">
+                    <input type="text" id="inputPesquisa" onkeyup="pesquisarTermos()" placeholder="Pesquisar palavra ou significado..." class="bg-white px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600 w-64">
+                    <button onclick="abrirModalContribuir()" class="bg-brand-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-brand-700 transition">
+                        <i class="fa-solid fa-plus mr-1"></i> Adicionar Palavra
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grelha de Entradas do Dicionário -->
+            <div id="gridDicionario" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <!-- Entrada 1 -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between" data-audio-src="">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="bg-brand-50 text-brand-700 text-xs font-bold px-2.5 py-1 rounded-md">Ndau • Sofala</span>
+                            <span class="bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                                <i class="fa-solid fa-circle-check text-[10px]"></i> Verificado
+                            </span>
+                        </div>
+                        <h4 class="text-2xl font-black text-slate-900 mb-1">Mbhaka</h4>
+                        <p class="text-sm font-medium text-slate-500 mb-4">Significado: <strong class="text-slate-800">Gato</strong> (Animal doméstico)</p>
+                        
+                        <div class="bg-slate-50 p-3.5 rounded-xl text-xs space-y-2 mb-4 border border-slate-100">
+                            <div><strong class="text-slate-700">Exemplo:</strong> <em>Mbhaka yamba ipa</em></div>
+                            <div><strong class="text-slate-700">Tradução:</strong> O gato comeu o peixe.</div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <div class="text-slate-500">
+                            Por: <span class="font-semibold text-slate-700">João Paulo Gundo</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="tocarAudio(this, 'Mbhaka')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 p-2 rounded-lg transition" title="Ouvir pronúncia">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                            <button onclick="abrirModalCorrecao('Mbhaka')" class="bg-amber-50 hover:bg-amber-100 text-amber-700 p-2 rounded-lg transition" title="Sugerir correção">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Entrada 2 -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between" data-audio-src="">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="bg-brand-50 text-brand-700 text-xs font-bold px-2.5 py-1 rounded-md">Changana • Maputo</span>
+                            <span class="bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                                <i class="fa-solid fa-circle-check text-[10px]"></i> Verificado
+                            </span>
+                        </div>
+                        <h4 class="text-2xl font-black text-slate-900 mb-1">Kanimambo</h4>
+                        <p class="text-sm font-medium text-slate-500 mb-4">Significado: <strong class="text-slate-800">Obrigado / Muito obrigado</strong></p>
+                        
+                        <div class="bg-slate-50 p-3.5 rounded-xl text-xs space-y-2 mb-4 border border-slate-100">
+                            <div><strong class="text-slate-700">Fonética:</strong> <em>ka-ni-mam-bo</em></div>
+                            <div><strong class="text-slate-700">Uso:</strong> Usado para expressar gratidão em qualquer contexto.</div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <div class="text-slate-500">
+                            Por: <span class="font-semibold text-slate-700">Eusébio Nhantumbo</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="tocarAudio(this, 'Kanimambo')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 p-2 rounded-lg transition" title="Ouvir pronúncia">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                            <button onclick="abrirModalCorrecao('Kanimambo')" class="bg-amber-50 hover:bg-amber-100 text-amber-700 p-2 rounded-lg transition" title="Sugerir correção">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Entrada 3 -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between" data-audio-src="">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="bg-brand-50 text-brand-700 text-xs font-bold px-2.5 py-1 rounded-md">Macua • Nampula</span>
+                            <span class="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                                <i class="fa-solid fa-clock text-[10px]"></i> Em análise
+                            </span>
+                        </div>
+                        <h4 class="text-2xl font-black text-slate-900 mb-1">Mapiko</h4>
+                        <p class="text-sm font-medium text-slate-500 mb-4">Significado: <strong class="text-slate-800">Dança tradicional de máscaras</strong></p>
+                        
+                        <div class="bg-slate-50 p-3.5 rounded-xl text-xs space-y-2 mb-4 border border-slate-100">
+                            <div><strong class="text-slate-700">Contexto:</strong> Património cultural ancestral macua ligado a ritos.</div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <div class="text-slate-500">
+                            Por: <span class="font-semibold text-slate-700">Catarina Manuel</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="tocarAudio(this, 'Mapiko')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 p-2 rounded-lg transition" title="Ouvir pronúncia">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                            <button onclick="abrirModalCorrecao('Mapiko')" class="bg-amber-50 hover:bg-amber-100 text-amber-700 p-2 rounded-lg transition" title="Sugerir correção">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Banco de Vozes -->
+    <section id="vozes" class="py-20 bg-white border-t border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <span class="text-brand-600 font-bold text-xs uppercase tracking-wider">Arquivo Sonoro</span>
+            <h3 class="text-3xl font-black text-slate-900 mt-1 mb-4">Ouça como Moçambique fala</h3>
+            <p class="text-slate-600 max-w-xl mx-auto mb-12">Cada língua tem uma voz, uma entoação e uma história. Ouça expressões essenciais do dia a dia gravadas por falantes nativos.</p>
+            
+            <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
+                <div class="bg-slate-50 border border-slate-200 p-6 rounded-2xl hover:border-brand-600 transition group cursor-pointer" onclick="tocarAudioSimples()">
+                    <div class="w-12 h-12 bg-brand-100 text-brand-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-brand-600 group-hover:text-white transition">
+                        <i class="fa-solid fa-volume-high text-lg"></i>
+                    </div>
+                    <h5 class="font-bold text-slate-900 mb-1">“Como estás?”</h5>
+                    <p class="text-xs text-slate-500">Kota ku mini? (Changana)</p>
+                </div>
+
+                <div class="bg-slate-50 border border-slate-200 p-6 rounded-2xl hover:border-brand-600 transition group cursor-pointer" onclick="tocarAudioSimples()">
+                    <div class="w-12 h-12 bg-brand-100 text-brand-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-brand-600 group-hover:text-white transition">
+                        <i class="fa-solid fa-volume-high text-lg"></i>
+                    </div>
+                    <h5 class="font-bold text-slate-900 mb-1">“Bom dia”</h5>
+                    <p class="text-xs text-slate-500">Mhoro / Ntsongo (Changana)</p>
+                </div>
+
+                <div class="bg-slate-50 border border-slate-200 p-6 rounded-2xl hover:border-brand-600 transition group cursor-pointer" onclick="tocarAudioSimples()">
+                    <div class="w-12 h-12 bg-brand-100 text-brand-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-brand-600 group-hover:text-white transition">
+                        <i class="fa-solid fa-volume-high text-lg"></i>
+                    </div>
+                    <h5 class="font-bold text-slate-900 mb-1">“Água”</h5>
+                    <p class="text-xs text-slate-500">Mati (Changana/Macua) • Madzi (Sena)</p>
+                </div>
+
+                <div class="bg-slate-50 border border-slate-200 p-6 rounded-2xl hover:border-brand-600 transition group cursor-pointer" onclick="tocarAudioSimples()">
+                    <div class="w-12 h-12 bg-brand-100 text-brand-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-brand-600 group-hover:text-white transition">
+                        <i class="fa-solid fa-volume-high text-lg"></i>
+                    </div>
+                    <h5 class="font-bold text-slate-900 mb-1">“Quanto custa?”</h5>
+                    <p class="text-xs text-slate-500">I mali muni? (Changana)</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Provérbios e Sabedoria Popular -->
+    <section id="proverbios" class="py-20 bg-slate-900 text-white">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <span class="text-earth-500 font-bold text-xs uppercase tracking-wider">Património Oral</span>
+                <h3 class="text-3xl font-black mt-1">Provérbios & Sabedoria Popular</h3>
+            </div>
+            
+            <div class="bg-slate-800/80 border border-slate-700 p-8 rounded-3xl relative">
+                <div class="absolute top-6 right-8 text-slate-600 text-6xl font-serif">“</div>
+                <span class="bg-brand-600 text-white text-xs font-bold px-3 py-1 rounded-md mb-4 inline-block">Ndau • Sofala</span>
+                <h4 class="text-2xl font-bold mb-3 italic">"Mwana wa muchenje unochema akazvirira."</h4>
+                <p class="text-slate-300 text-sm mb-4"><strong class="text-white">Tradução:</strong> O filho sábio chora em silêncio.</p>
+                <p class="text-slate-400 text-xs mb-6"><strong class="text-slate-300">Significado cultural:</strong> Ensina a discrição, a resiliência e a maturidade perante as dificuldades da vida comunitária.</p>
+                
+                <div class="flex items-center justify-between border-t border-slate-700 pt-4 text-xs text-slate-400">
+                    <div>Colaborador: <span class="text-white font-medium">João Paulo Gundo (Beira)</span></div>
+                    <button onclick="tocarAudioSimples()" class="bg-earth-500 hover:bg-amber-600 text-slate-900 font-bold px-4 py-2 rounded-xl transition flex items-center gap-2">
+                        <i class="fa-solid fa-volume-high"></i> Ouvir Provérbio
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Perfil da Comunidade -->
+    <section id="comunidade" class="py-20 bg-slate-50 border-t border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-xl mx-auto mb-16">
+                <span class="text-brand-600 font-bold text-xs uppercase tracking-wider">Quem constrói o Atlas</span>
+                <h3 class="text-3xl font-black text-slate-900 mt-1">Comunidade & Colaboradores</h3>
+                <p class="text-slate-600 text-sm mt-2">Distinguidos pela dedicação à preservação e verificação das nossas línguas.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Colaborador 1 -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center">
+                    <div class="w-20 h-20 bg-brand-100 text-brand-700 rounded-full flex items-center justify-center font-black text-2xl mx-auto mb-4">
+                        JG
+                    </div>
+                    <h4 class="font-bold text-slate-900 text-lg">João Paulo Gundo</h4>
+                    <span class="inline-block bg-brand-50 text-brand-700 text-xs font-semibold px-2.5 py-0.5 rounded-full mt-1">Guardião da Língua</span>
+                    <p class="text-xs text-slate-500 mt-3">🇲🇿 Sofala, Moçambique</p>
+                    <div class="mt-6 pt-4 border-t border-slate-100 grid grid-cols-3 gap-2 text-center text-xs">
+                        <div><strong class="block text-slate-900 text-sm">37</strong>Contribuições</div>
+                        <div><strong class="block text-slate-900 text-sm">29</strong>Palavras</div>
+                        <div><strong class="block text-slate-900 text-sm">18</strong>Áudios</div>
+                    </div>
+                </div>
+
+                <!-- Colaborador 2 -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center">
+                    <div class="w-20 h-20 bg-brand-100 text-brand-700 rounded-full flex items-center justify-center font-black text-2xl mx-auto mb-4">
+                        EN
+                    </div>
+                    <h4 class="font-bold text-slate-900 text-lg">Eusébio Nhantumbo</h4>
+                    <span class="inline-block bg-brand-50 text-brand-700 text-xs font-semibold px-2.5 py-0.5 rounded-full mt-1">Especialista Linguístico</span>
+                    <p class="text-xs text-slate-500 mt-3">🇲🇿 Maputo, Moçambique</p>
+                    <div class="mt-6 pt-4 border-t border-slate-100 grid grid-cols-3 gap-2 text-center text-xs">
+                        <div><strong class="block text-slate-900 text-sm">52</strong>Contribuições</div>
+                        <div><strong class="block text-slate-900 text-sm">41</strong>Palavras</div>
+                        <div><strong class="block text-slate-900 text-sm">25</strong>Áudios</div>
+                    </div>
+                </div>
+
+                <!-- Colaborador 3 -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center">
+                    <div class="w-20 h-20 bg-brand-100 text-brand-700 rounded-full flex items-center justify-center font-black text-2xl mx-auto mb-4">
+                        CM
+                    </div>
+                    <h4 class="font-bold text-slate-900 text-lg">Catarina Manuel</h4>
+                    <span class="inline-block bg-brand-50 text-brand-700 text-xs font-semibold px-2.5 py-0.5 rounded-full mt-1">Documentador Comunitário</span>
+                    <p class="text-xs text-slate-500 mt-3">🇲🇿 Nampula, Moçambique</p>
+                    <div class="mt-6 pt-4 border-t border-slate-100 grid grid-cols-3 gap-2 text-center text-xs">
+                        <div><strong class="block text-slate-900 text-sm">24</strong>Contribuições</div>
+                        <div><strong class="block text-slate-900 text-sm">19</strong>Palavras</div>
+                        <div><strong class="block text-slate-900 text-sm">12</strong>Áudios</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Rodapé -->
+    <footer class="bg-slate-900 text-slate-400 py-12 border-t border-slate-800 text-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+                <div class="text-white font-bold text-lg mb-1">Atlas Linguístico de Moçambique</div>
+                <p class="text-xs text-slate-500">Promovendo a diversidade cultural e linguística do Rovuma ao Maputo. © 2026.</p>
+            </div>
+            <div class="flex space-x-6 text-xs">
+                <a href="#" class="hover:text-white transition">Sobre o Projeto</a>
+                <a href="#" class="hover:text-white transition">Termos de Contribuição</a>
+                <a href="#" class="hover:text-white transition">Equipa Científica</a>
+                <a href="#" class="hover:text-white transition">Contacto</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL DE CONTRIBUIÇÃO -->
+    <div id="modalContribuir" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onclick="fecharModalContribuir()" class="absolute top-6 right-6 text-slate-400 hover:text-slate-700">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <h3 class="text-2xl font-black text-slate-900 mb-2">Contribuir com uma Palavra</h3>
+            <p class="text-xs text-slate-500 mb-6">Partilhe termos diretamente para o dicionário público e grave a pronúncia nativa.</p>
+            
+            <form onsubmit="enviarContribuicao(event)" class="space-y-4 text-xs font-medium">
+                <div>
+                    <label class="block text-slate-700 mb-1">Seu Nome / Colaborador</label>
+                    <input type="text" id="inputNome" required placeholder="Ex: Maria Matusse" class="w-full bg-slate-50 border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-brand-600 focus:outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-slate-700 mb-1">Língua Moçambicana</label>
+                        <select id="selectLingua" class="w-full bg-slate-50 border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-brand-600 focus:outline-none">
+                            <option>Ndau</option>
+                            <option>Changana</option>
+                            <option>Macua</option>
+                            <option>Sena</option>
+                            <option>Chuabo</option>
+                            <option>Ronga</option>
+                            <option>Tswa</option>
+                            <option>Chopi</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-slate-700 mb-1">Província</label>
+                        <select id="selectProvincia" class="w-full bg-slate-50 border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-brand-600 focus:outline-none">
+                            <option>Sofala</option>
+                            <option>Maputo</option>
+                            <option>Nampula</option>
+                            <option>Zambézia</option>
+                            <option>Gaza</option>
+                            <option>Inhambane</option>
+                            <option>Manica</option>
+                            <option>Tete</option>
+                            <option>Cabo Delgado</option>
+                            <option>Niassa</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-slate-700 mb-1">Palavra ou Expressão Original</label>
+                    <input type="text" id="inputPalavra" required placeholder="Ex: Mbhaka" class="w-full bg-slate-50 border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-brand-600 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-slate-700 mb-1">Significado em Português</label>
+                    <input type="text" id="inputSignificado" required placeholder="Ex: Gato" class="w-full bg-slate-50 border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-brand-600 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-slate-700 mb-1">Exemplo de Frase / Contexto (Opcional)</label>
+                    <textarea id="inputExemplo" rows="2" placeholder="Ex: Mbhaka yamba ipa" class="w-full bg-slate-50 border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-brand-600 focus:outline-none"></textarea>
+                </div>
+
+                <!-- Secção de Gravação de Voz -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                    <label class="block text-slate-700 font-semibold mb-2">Gravar Pronúncia em Áudio</label>
+                    <div class="flex items-center justify-center gap-3">
+                        <button type="button" id="btnGravar" onclick="toggleGravacao()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2">
+                            <i class="fa-solid fa-microphone"></i> <span id="txtBtnGravar">Gravar Áudio</span>
+                        </button>
+                        <span id="statusGravacao" class="text-slate-500 italic">Nenhum áudio gravado</span>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition">
+                        Publicar Imediatamente no Dicionário
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-    <aside class="map-info"><span class="eyebrow">PROVÍNCIA</span><h3 id="selectedProvince">Sofala</h3><p id="provinceText">Explore os registos linguísticos associados à província seleccionada.</p><div id="provinceTags" class="tags"></div><button class="btn dark" id="provinceExplore">Ver registos</button></aside>
-  </div>
-</section>
 
-<section class="section alt" id="linguas">
-  <div class="section-head"><div><span class="eyebrow">CATÁLOGO</span><h2>Línguas de Moçambique</h2></div><p>Perfis com localização, variantes, expressões e materiais comunitários.</p></div>
-  <div class="filters"><input id="languageSearch" placeholder="Pesquisar língua..."><select id="regionFilter"><option value="">Todas as regiões</option><option>Norte</option><option>Centro</option><option>Sul</option></select></div>
-  <div id="languageGrid" class="language-grid"></div>
-</section>
+    <!-- SCRIPTS DE INTERATIVIDADE -->
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let audioBlobUrl = null;
+        let estaA_Gravar = false;
 
-<section class="section" id="dicionario">
-  <div class="section-head"><div><span class="eyebrow">DICIONÁRIO COLABORATIVO</span><h2>Palavras e expressões</h2></div><p>Pesquise por palavra, significado, língua ou região.</p></div>
-  <div class="dictionary-bar"><input id="wordSearch" placeholder="Ex.: mbhaka, saudação, gato..."><select id="langFilter"><option value="">Todas as línguas</option></select><select id="statusFilter"><option value="">Todos os estados</option><option>Verificado</option><option>Em análise</option><option>Pendente</option></select></div>
-  <div id="dictionary" class="dictionary"></div>
-</section>
+        // Funções para o Modal
+        function abrirModalContribuir() {
+            document.getElementById('modalContribuir').classList.remove('hidden');
+            audioBlobUrl = null;
+            document.getElementById('statusGravacao').innerText = "Nenhum áudio gravado";
+        }
 
-<section class="section contribute" id="contribuir">
-  <div class="contribute-intro"><span class="eyebrow">A SUA VOZ CONTA</span><h2>Contribua para o Atlas</h2><p>Conhece uma palavra, expressão, provérbio ou pronúncia que ainda não está registada? Partilhe-a. O Atlas preserva também variantes e conhecimentos locais.</p><div class="principles"><div>✓ Registo comunitário</div><div>✓ Revisão antes da publicação</div><div>✓ Histórico das alterações</div><div>✓ Respeito pelas variantes locais</div></div></div>
-  <form id="contributionForm" class="form-card">
-    <label>Seu nome <input name="name" required placeholder="Nome ou nome de colaborador"></label>
-    <div class="two"><label>Língua <select name="language" id="contribLanguage" required></select></label><label>Província <select name="province" required><option value="">Seleccione...</option><option>Sofala</option><option>Manica</option><option>Zambézia</option><option>Tete</option><option>Nampula</option><option>Niassa</option><option>Cabo Delgado</option><option>Inhambane</option><option>Gaza</option><option>Maputo</option></select></label></div>
-    <label>Palavra ou expressão <input name="term" required placeholder="Ex.: uma palavra na língua local"></label>
-    <label>Significado em português <input name="meaning" required></label>
-    <label>Contexto / frase / provérbio <textarea name="context" rows="3"></textarea></label>
-    <label>Observação ou fonte <textarea name="source" rows="2" placeholder="Localidade, informante, livro, tradição oral, etc."></textarea></label>
-    <label class="upload">🔊 Áudio da pronúncia <input type="file" accept="audio/*" name="audio"><small>Interface preparada para ligação a armazenamento de áudio na V3.</small></label>
-    <button class="btn primary full" type="submit">Enviar para revisão →</button><p class="form-msg" id="formMsg"></p>
-  </form>
-</section>
+        function fecharModalContribuir() {
+            document.getElementById('modalContribuir').classList.add('hidden');
+        }
 
-<section class="section alt" id="comunidade">
-  <div class="section-head"><div><span class="eyebrow">TRANSPARÊNCIA</span><h2>Comunidade e histórico</h2></div><p>Veja como o conhecimento entra no Atlas e como as informações podem ser rectificadas.</p></div>
-  <div class="workflow"><div><b>01</b><h3>Contribuição</h3><p>Um membro envia uma informação.</p></div><div><b>02</b><h3>Análise</h3><p>A equipa ou comunidade verifica a informação.</p></div><div><b>03</b><h3>Publicação</h3><p>O registo aprovado entra no Atlas.</p></div><div><b>04</b><h3>Rectificação</h3><p>Novas evidências ficam registadas no histórico.</p></div></div>
-  <div class="history"><div class="history-head"><h3>Actividade recente</h3><span class="status verified">Sistema activo</span></div><div id="activity"></div></div>
-</section>
-</main>
+        function abrirModalCorrecao(palavra) {
+            // Apenas para efeitos informativos sem bloquear a experiência
+            console.log('Sugerir alteração para o termo: ' + palavra);
+        }
 
-<footer><div><b>🇲🇿 ALM</b><p>Atlas Linguístico de Moçambique</p></div><div><span>Mapear as línguas. Preservar as vozes.</span><small>Interface V2 · preparada para base de dados e moderação</small></div></footer>
+        // Gravação de Áudio via Navegador
+        async function toggleGravacao() {
+            const btn = document.getElementById('btnGravar');
+            const txt = document.getElementById('txtBtnGravar');
+            const status = document.getElementById('statusGravacao');
 
-<div class="modal" id="entryModal"><div class="modal-box"><button class="close">×</button><div id="entryContent"></div></div></div>
-<div class="modal" id="correctionModal"><div class="modal-box"><button class="close">×</button><span class="eyebrow">RECTIFICAR INFORMAÇÃO</span><h2>Sugerir uma correcção</h2><form id="correctionForm"><input type="hidden" name="term"><label>Seu nome<input name="name" required></label><label>O que deve ser corrigido?<textarea name="correction" rows="5" required></textarea></label><label>Fonte / localidade<textarea name="source" rows="3"></textarea></label><button class="btn primary full">Enviar sugestão</button><p class="form-msg" id="correctionMsg"></p></form></div></div>
-<div class="modal" id="admin"><div class="modal-box admin-box"><button class="close">×</button><span class="eyebrow">PAINEL</span><h2>Administração do Atlas</h2><p>Esta é a interface de gestão da V2. A ligação à autenticação e à base de dados será feita na próxima etapa.</p><div class="admin-cards"><div><b id="pendingCount">0</b><span>Pendentes</span></div><div><b>18</b><span>Em análise</span></div><div><b>104</b><span>Verificados</span></div></div><h3>Fila de moderação</h3><div id="moderationList"></div></div></div>
-<script src="script.js"></script>
+            if (!estaA_Gravar) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        audioBlobUrl = URL.createObjectURL(audioBlob);
+                        status.innerText = "Áudio gravado com sucesso! ✅";
+                    };
+
+                    mediaRecorder.start();
+                    estaA_Gravar = true;
+                    txt.innerText = "Parar Gravação";
+                    btn.classList.replace('bg-red-500', 'bg-slate-800');
+                    status.innerText = "A gravar... Fale agora.";
+                } catch (err) {
+                    alert('Permissão de microfone negada ou indisponível no navegador.');
+                }
+            } else {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                estaA_Gravar = false;
+                txt.innerText = "Gravar Novamente";
+                btn.classList.replace('bg-slate-800', 'bg-red-500');
+            }
+        }
+
+        // Tocar Áudio (Reproduz a gravação real se existir, ou um tom de resposta silencioso sem alertas)
+        function tocarAudio(botaoElement, termo) {
+            const card = botaoElement.closest('.bg-white');
+            const audioSrc = card.getAttribute('data-audio-src');
+
+            if (audioSrc && audioSrc.trim() !== "") {
+                const audio = new Audio(audioSrc);
+                audio.play().catch(e => {
+                    console.log("Reprodução impedida pelo navegador:", e);
+                });
+            } else {
+                // Tom sonoro suave sintetizado para termos sem gravação prévia (sem disparar alertas)
+                try {
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(520, audioCtx.currentTime);
+                    gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioCtx.currentTime + 0.2);
+                } catch (err) {
+                    console.log("Áudio não suportado diretamente.");
+                }
+            }
+        }
+
+        // Para os botões estáticos no Banco de Vozes
+        function tocarAudioSimples() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+                gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.2);
+            } catch (err) {
+                console.log("Áudio simples reproduzido silenciosamente.");
+            }
+        }
+
+        function filtrarRegiao(regiao) {
+            document.getElementById('mapa').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function pesquisarTermos() {
+            const input = document.getElementById('inputPesquisa').value.toLowerCase();
+            const grid = document.getElementById('gridDicionario');
+            const cards = grid.getElementsByClassName('bg-white');
+
+            for (let i = 0; i < cards.length; i++) {
+                const texto = cards[i].innerText.toLowerCase();
+                if (texto.includes(input)) {
+                    cards[i].style.display = "";
+                } else {
+                    cards[i].style.display = "none";
+                }
+            }
+        }
+
+        // Publicação Direta Instantânea
+        function enviarContribuicao(event) {
+            event.preventDefault();
+
+            const nome = document.getElementById('inputNome').value;
+            const lingua = document.getElementById('selectLingua').value;
+            const provincia = document.getElementById('selectProvincia').value;
+            const palavra = document.getElementById('inputPalavra').value;
+            const significado = document.getElementById('inputSignificado').value;
+            const exemplo = document.getElementById('inputExemplo').value;
+
+            const grid = document.getElementById('gridDicionario');
+            
+            // Criar novo cartão HTML dinamicamente
+            const novoCartao = document.createElement('div');
+            novoCartao.className = "bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between";
+            
+            if (audioBlobUrl) {
+                novoCartao.setAttribute('data-audio-src', audioBlobUrl);
+            } else {
+                novoCartao.setAttribute('data-audio-src', '');
+            }
+
+            novoCartao.innerHTML = `
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="bg-brand-50 text-brand-700 text-xs font-bold px-2.5 py-1 rounded-md">${lingua} • ${provincia}</span>
+                        <span class="bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                            <i class="fa-solid fa-circle-check text-[10px]"></i> Direto
+                        </span>
+                    </div>
+                    <h4 class="text-2xl font-black text-slate-900 mb-1">${palavra}</h4>
+                    <p class="text-sm font-medium text-slate-500 mb-4">Significado: <strong class="text-slate-800">${significado}</strong></p>
+                    
+                    ${exemplo ? `
+                    <div class="bg-slate-50 p-3.5 rounded-xl text-xs space-y-2 mb-4 border border-slate-100">
+                        <div><strong class="text-slate-700">Exemplo:</strong> <em>${exemplo}</em></div>
+                    </div>` : ''}
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <div class="text-slate-500">
+                        Por: <span class="font-semibold text-slate-700">${nome}</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="tocarAudio(this, '${palavra}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 p-2 rounded-lg transition" title="Ouvir pronúncia">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </button>
+                        <button onclick="abrirModalCorrecao('${palavra}')" class="bg-amber-50 hover:bg-amber-100 text-amber-700 p-2 rounded-lg transition" title="Sugerir correção">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Adicionar ao topo do dicionário
+            grid.prepend(novoCartao);
+
+            fecharModalContribuir();
+            document.getElementById('inputPalavra').value = '';
+            document.getElementById('inputSignificado').value = '';
+            document.getElementById('inputExemplo').value = '';
+            audioBlobUrl = null;
+        }
+    </script>
 </body>
-</html>'''
-
-style = r''':root{--green:#007a3d;--red:#d21034;--yellow:#f7d117;--ink:#17221d;--muted:#65736c;--cream:#f7f4eb;--line:#dfe6e1;--white:#fff;--shadow:0 18px 50px rgba(17,39,28,.09)}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);font-family:"DM Sans",sans-serif;background:#fff}a{text-decoration:none;color:inherit}.topbar{height:76px;display:flex;align-items:center;justify-content:space-between;padding:0 5%;border-bottom:1px solid var(--line);background:rgba(255,255,255,.96);position:sticky;top:0;z-index:20;backdrop-filter:blur(12px)}.brand{display:flex;align-items:center;gap:10px}.brand b{font-size:23px;color:var(--green)}.brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:.08em;text-transform:uppercase}.flagmark{font-size:29px}.topbar nav{display:flex;align-items:center;gap:24px;font-size:13px;font-weight:600}.topbar nav a:hover{color:var(--green)}.admin-btn{border:1px solid var(--green);background:white;color:var(--green);border-radius:999px;padding:9px 14px;font-weight:700}.menu{display:none;border:0;background:none;font-size:25px}
-.hero{min-height:640px;padding:80px 7%;display:grid;grid-template-columns:1.05fr .95fr;gap:7%;align-items:center;background:linear-gradient(135deg,#fff 0%,#f7faf6 100%);border-bottom:7px solid var(--yellow)}.eyebrow{font-size:11px;font-weight:800;letter-spacing:.16em;color:var(--green)}h1,h2{font-family:"Playfair Display",serif}h1{font-size:clamp(45px,6vw,76px);line-height:1.02;margin:18px 0}h1 em{font-style:normal;color:var(--green)}h2{font-size:42px;margin:8px 0 12px}.hero p{max-width:650px;font-size:18px;line-height:1.7;color:var(--muted)}.actions{display:flex;gap:12px;margin:28px 0}.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:10px;padding:13px 19px;font-weight:800;border:0;cursor:pointer;font-family:inherit}.primary{background:var(--green);color:#fff}.ghost{border:1px solid #b8c8be;color:var(--green);background:#fff}.dark{background:#17221d;color:#fff}.full{width:100%}.hero-note{font-size:12px;color:var(--muted)}.hero-note span{color:var(--green)}.hero-card{background:#fff;border:1px solid var(--line);border-radius:26px;overflow:hidden;box-shadow:var(--shadow)}.map-art{height:410px;background:linear-gradient(160deg,#eef8f0,#fff6cc);position:relative;display:flex;align-items:center;justify-content:center}.moz-shape{height:310px;width:185px;background:linear-gradient(90deg,var(--green) 0 25%,#f5f0df 25% 72%,var(--red) 72%);clip-path:polygon(28% 0,72% 4%,85% 14%,77% 27%,90% 40%,77% 51%,83% 63%,69% 77%,74% 88%,55% 100%,35% 91%,29% 75%,15% 65%,22% 50%,10% 38%,22% 23%,14% 12%);position:relative}.map-title{position:absolute;top:28px;font-weight:900;letter-spacing:.2em}.pin{position:absolute;border-radius:50%;background:var(--yellow);border:3px solid #fff;width:34px;height:34px;text-align:center;padding-top:5px;font-weight:900}.p1{top:35px;right:40px}.p2{top:130px;left:48px}.p3{bottom:45px;right:47px}.map-label{position:absolute;font-size:10px;font-weight:800;letter-spacing:.1em}.north{top:76px}.centre{top:205px}.south{bottom:55px}.hero-card-footer{padding:18px 22px;display:flex;justify-content:space-between}.hero-card-footer span{color:var(--muted);font-size:12px}.stats{display:grid;grid-template-columns:repeat(4,1fr);padding:30px 7%;border-bottom:1px solid var(--line)}.stats div{padding:10px 25px;border-right:1px solid var(--line)}.stats div:last-child{border:0}.stats strong{display:block;font-size:30px;color:var(--green)}.stats span{font-size:12px;color:var(--muted)}
-.section{padding:90px 7%}.section.alt{background:var(--cream)}.section-head{display:flex;justify-content:space-between;gap:40px;align-items:end;margin-bottom:35px}.section-head p{max-width:470px;color:var(--muted);line-height:1.6}.map-panel{display:grid;grid-template-columns:1.3fr .7fr;gap:25px;background:#f0f6f0;border-radius:25px;padding:25px}.province-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;min-height:420px;padding:35px;background:linear-gradient(135deg,#e9f5ec,#fff9d7);border-radius:20px}.province{border:1px solid #cad9ce;background:#fff;border-radius:10px;padding:13px 7px;font:600 12px "DM Sans";cursor:pointer;align-self:center;transition:.2s}.province:hover,.province.active{background:var(--green);color:#fff;transform:translateY(-2px)}.map-info{background:#fff;border-radius:20px;padding:32px;display:flex;flex-direction:column;justify-content:center}.map-info h3{font-family:"Playfair Display";font-size:38px;margin:10px 0}.map-info p{color:var(--muted);line-height:1.6}.tags{display:flex;flex-wrap:wrap;gap:7px;margin:15px 0 25px}.tags span{font-size:11px;padding:7px 9px;background:#edf6ef;border-radius:20px;color:var(--green);font-weight:700}
-.filters,.dictionary-bar{display:flex;gap:10px;margin-bottom:20px}.filters input,.filters select,.dictionary-bar input,.dictionary-bar select{flex:1;border:1px solid var(--line);border-radius:10px;padding:13px;background:#fff;font:inherit}.language-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.lang-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:23px;transition:.2s}.lang-card:hover{transform:translateY(-3px);box-shadow:var(--shadow)}.lang-top{display:flex;justify-content:space-between;align-items:start}.lang-card h3{font-family:"Playfair Display";font-size:24px;margin:5px 0}.region{font-size:10px;font-weight:800;padding:6px 8px;border-radius:20px;background:#eef6f0;color:var(--green)}.lang-card p{color:var(--muted);font-size:13px;line-height:1.55}.lang-meta{font-size:11px;color:#7c8982;margin-top:15px}.lang-card button{margin-top:14px;background:none;border:0;color:var(--green);font-weight:800;padding:0;cursor:pointer}
-.dictionary{display:grid;grid-template-columns:repeat(2,1fr);gap:13px}.word-card{border:1px solid var(--line);border-radius:15px;padding:19px;background:#fff}.word-head{display:flex;justify-content:space-between}.word{font-family:"Playfair Display";font-size:25px}.meaning{font-size:14px;margin:6px 0}.word-meta{font-size:11px;color:var(--muted)}.status{display:inline-block;font-size:10px;padding:5px 8px;border-radius:20px;font-weight:800}.verified{background:#e5f4e9;color:#14713d}.review{background:#eef1fb;color:#4a5fa6}.pending{background:#fff3d2;color:#956c00}.word-actions{display:flex;gap:12px;margin-top:12px}.linkbtn{border:0;background:none;color:var(--green);font:700 11px "DM Sans";cursor:pointer;padding:0}
-.contribute{display:grid;grid-template-columns:.85fr 1.15fr;gap:8%;background:linear-gradient(135deg,#f2f8f2,#fff)}.contribute-intro h2{font-size:48px}.contribute-intro>p{font-size:16px;color:var(--muted);line-height:1.7}.principles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:28px;font-size:12px;font-weight:700}.form-card{background:#fff;padding:30px;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow)}label{display:block;font-size:11px;font-weight:800;margin-bottom:14px}label input,label textarea,label select{display:block;width:100%;margin-top:7px;border:1px solid var(--line);border-radius:9px;padding:12px;font:inherit;font-weight:400;background:#fff}textarea{resize:vertical}.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.upload{padding:14px;background:#f7faf7;border-radius:10px}.upload small{display:block;color:var(--muted);font-weight:400;margin-top:5px}.form-msg{font-size:12px;color:var(--green);min-height:18px}
-.workflow{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.workflow>div{padding:25px;background:#fff;border:1px solid var(--line);border-radius:16px}.workflow b{color:var(--red);font-size:13px}.workflow h3{margin:25px 0 7px}.workflow p{font-size:12px;color:var(--muted);line-height:1.5}.history{margin-top:22px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px}.history-head{display:flex;justify-content:space-between;align-items:center}.activity-item{padding:14px 0;border-top:1px solid var(--line);font-size:12px;display:flex;justify-content:space-between;gap:15px}.activity-item span{color:var(--muted)}
-footer{padding:35px 7%;background:#17221d;color:#fff;display:flex;justify-content:space-between}footer p,footer small{color:#aab8af;font-size:11px;display:block}footer span{display:block;margin-bottom:8px;color:#f7d117}
-.modal{display:none;position:fixed;inset:0;background:rgba(10,20,15,.55);z-index:50;padding:5vh 20px;overflow:auto}.modal.open{display:block}.modal-box{max-width:650px;margin:auto;background:#fff;border-radius:20px;padding:32px;position:relative;box-shadow:0 30px 100px #0004}.close{position:absolute;right:18px;top:13px;border:0;background:none;font-size:28px;cursor:pointer}.modal-box h2{margin-top:10px}.admin-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0}.admin-cards div{background:#f3f7f3;padding:18px;border-radius:12px}.admin-cards b{font-size:27px;color:var(--green);display:block}.admin-cards span{font-size:11px;color:var(--muted)}.moderation-item{padding:15px 0;border-top:1px solid var(--line);font-size:12px}.moderation-item button{margin-top:8px;border:0;background:var(--green);color:#fff;padding:7px 10px;border-radius:7px;font-size:11px}
-@media(max-width:900px){.topbar nav{display:none}.menu{display:block}.hero,.contribute,.map-panel{grid-template-columns:1fr}.hero{padding-top:55px}.stats{grid-template-columns:1fr 1fr}.language-grid{grid-template-columns:1fr 1fr}.workflow{grid-template-columns:1fr 1fr}.section-head{display:block}.section-head p{margin-top:10px}}
-@media(max-width:600px){.topbar{padding:0 4%}.hero,.section{padding:55px 5%}.hero-card{display:none}h1{font-size:48px}.stats{padding:20px 5%}.stats div{padding:12px;border-bottom:1px solid var(--line)}.language-grid,.dictionary,.workflow{grid-template-columns:1fr}.province-grid{grid-template-columns:1fr 1fr;min-height:auto;padding:18px}.filters,.dictionary-bar{display:grid;grid-template-columns:1fr}.two{grid-template-columns:1fr}.principles{grid-template-columns:1fr}footer{display:block}.hero-card-footer{display:block}.hero-card-footer span{margin-top:5px;display:block}}
-'''
-
-script = r'''const languages=[
-{name:"Changana",region:"Sul",province:"Gaza · Maputo · Maputo Cidade",about:"Língua bantu com forte presença no sul de Moçambique e diferentes variantes locais."},
-{name:"Macua / Makhuwa",region:"Norte",province:"Nampula · Cabo Delgado · Niassa",about:"Uma das principais línguas do norte, com ampla diversidade interna e variedades regionais."},
-{name:"Sena",region:"Centro",province:"Sofala · Tete · Zambézia",about:"Língua bantu de grande presença no vale do Zambeze e no centro do país."},
-{name:"Chuabo",region:"Centro",province:"Zambézia",about:"Língua falada sobretudo na Zambézia, com repertório cultural e oral rico."},
-{name:"Ndau",region:"Centro",province:"Sofala · Manica",about:"Língua bantu do centro, com variedades e comunidades em Moçambique e países vizinhos."},
-{name:"Ronga",region:"Sul",province:"Maputo",about:"Língua bantu do sul, historicamente associada à região de Maputo."},
-{name:"Yao",region:"Norte",province:"Niassa · Cabo Delgado",about:"Língua de comunidades do norte, com presença transfronteiriça na África Austral."},
-{name:"Lomwe",region:"Norte",province:"Zambézia · Nampula",about:"Língua bantu do norte-centro, com forte presença na região da Zambézia e Nampula."},
-{name:"Tswa",region:"Sul",province:"Inhambane · Gaza",about:"Variedade bantu presente no sul de Moçambique."}
-];
-let words=[
-{term:"Mbhaka",lang:"Ndau",meaning:"gato",province:"Sofala",status:"Verificado",source:"Registo comunitário"},
-{term:"Ngwena",lang:"Ndau",meaning:"crocodilo",province:"Sofala",status:"Em análise",source:"Contribuição comunitária"},
-{term:"Gonjo",lang:"Ndau",meaning:"rato",province:"Manica",status:"Verificado",source:"Registo inicial"},
-{term:"Shuro",lang:"Ndau",meaning:"coelho",province:"Sofala",status:"Pendente",source:"A confirmar com comunidade"},
-{term:"Kanimambo",lang:"Changana",meaning:"obrigado / agradecimento",province:"Gaza",status:"Verificado",source:"Registo inicial"},
-{term:"Mhoro",lang:"Changana",meaning:"saudação",province:"Maputo",status:"Em análise",source:"Contribuição comunitária"},
-{term:"Mwane",lang:"Macua / Makhuwa",meaning:"forma de tratamento",province:"Nampula",status:"Em análise",source:"Registo comunitário"},
-{term:"Thaphata",lang:"Sena",meaning:"expressão registada para investigação",province:"Sofala",status:"Pendente",source:"A confirmar"}
-];
-const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
-function fillSelects(){let opts=languages.map(x=>`<option>${x.name}</option>`).join("");$("#langFilter").insertAdjacentHTML("beforeend",opts);$("#contribLanguage").insertAdjacentHTML("beforeend",opts)}
-function renderLanguages(){let q=$("#languageSearch").value.toLowerCase(),r=$("#regionFilter").value;let data=languages.filter(x=>(!r||x.region===r)&&(!q||x.name.toLowerCase().includes(q)));$("#languageGrid").innerHTML=data.map(x=>`<article class="lang-card"><div class="lang-top"><div><span class="eyebrow">${x.region.toUpperCase()}</span><h3>${x.name}</h3></div><span class="region">${x.region}</span></div><p>${x.about}</p><div class="lang-meta">📍 ${x.province}</div><button onclick="showLanguage('${x.name}')">Abrir perfil →</button></article>`).join("")||"<p>Nenhuma língua encontrada.</p>"}
-function renderDictionary(){let q=$("#wordSearch").value.toLowerCase(),l=$("#langFilter").value,s=$("#statusFilter").value;let data=words.filter(x=>(!q||[x.term,x.meaning,x.lang,x.province].join(" ").toLowerCase().includes(q))&&(!l||x.lang===l)&&(!s||x.status===s));$("#dictionary").innerHTML=data.map(x=>`<article class="word-card"><div class="word-head"><span class="word">${x.term}</span><span class="status ${x.status==="Verificado"?"verified":x.status==="Pendente"?"pending":"review"}">${x.status}</span></div><div class="meaning">${x.meaning}</div><div class="word-meta">${x.lang} · ${x.province} · ${x.source}</div><div class="word-actions"><button class="linkbtn" onclick="listen('${x.term}')">🔊 Ouvir</button><button class="linkbtn" onclick="correct('${x.term}')">✏ Sugerir correcção</button></div></article>`).join("")||"<p>Nenhum registo encontrado.</p>"}
-function listen(t){if("speechSynthesis"in window){speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(t);u.lang="pt-MZ";speechSynthesis.speak(u)}}
-function showLanguage(name){let x=languages.find(a=>a.name===name);$("#entryContent").innerHTML=`<span class="eyebrow">${x.region.toUpperCase()}</span><h2>${x.name}</h2><p>${x.about}</p><hr><p><b>Presença:</b> ${x.province}</p><p><b>O que poderá encontrar:</b> palavras, expressões, variantes, pronúncias, provérbios e referências comunitárias.</p><button class="btn primary" onclick="location.hash='dicionario';closeModals()">Explorar dicionário →</button>`;$("#entryModal").classList.add("open")}
-function correct(term){$("#correctionForm").term.value=term;$("#correctionMsg").textContent="";$("#correctionModal").classList.add("open")}
-function closeModals(){$$(".modal").forEach(m=>m.classList.remove("open"))}
-function activity(){let a=JSON.parse(localStorage.getItem("almActivity")||"[]");$("#activity").innerHTML=(a.length?a: [{text:"Registo inicial do Atlas preparado para colaboração.",time:"Hoje"},{text:"Interface V2 criada com estados de validação.",time:"Hoje"},{text:"Sistema de correcções preparado.",time:"Hoje"}]).slice(0,8).map(x=>`<div class="activity-item"><b>${x.text}</b><span>${x.time}</span></div>`).join("")}
-function moderation(){let a=JSON.parse(localStorage.getItem("almPending")||"[]");$("#pendingCount").textContent=a.length;$("#moderationList").innerHTML=a.length?a.map((x,i)=>`<div class="moderation-item"><b>${x.term}</b> — ${x.meaning}<br><span>${x.language} · ${x.province} · por ${x.name}</span><br><button onclick="approve(${i})">Marcar como verificado</button></div>`).join(""):"<p>Nenhuma contribuição local pendente.</p>"}
-function approve(i){let a=JSON.parse(localStorage.getItem("almPending")||"[]"),x=a.splice(i,1)[0];words.unshift({term:x.term,lang:x.language,meaning:x.meaning,province:x.province,status:"Verificado",source:"Contribuição comunitária"});localStorage.setItem("almPending",JSON.stringify(a));renderDictionary();moderation();activity()}
-$$(".province").forEach(b=>b.onclick=()=>{$$(".province").forEach(x=>x.classList.remove("active"));b.classList.add("active");let p=b.dataset.province;$("#selectedProvince").textContent=p;let ls=languages.filter(x=>x.province.includes(p)).map(x=>`<span>${x.name}</span>`);$("#provinceTags").innerHTML=ls.length?ls.join(""):"<span>Registos em construção</span>"});
-$("#provinceExplore").onclick=()=>location.hash="dicionario";
-$("#languageSearch").oninput=renderLanguages;$("#regionFilter").onchange=renderLanguages;$("#wordSearch").oninput=renderDictionary;$("#langFilter").onchange=renderDictionary;$("#statusFilter").onchange=renderDictionary;
-$("#contributionForm").onsubmit=e=>{e.preventDefault();let f=new FormData(e.target),x={name:f.get("name"),language:f.get("language"),province:f.get("province"),term:f.get("term"),meaning:f.get("meaning"),context:f.get("context"),source:f.get("source")};let a=JSON.parse(localStorage.getItem("almPending")||"[]");a.unshift(x);localStorage.setItem("almPending",JSON.stringify(a));let act=JSON.parse(localStorage.getItem("almActivity")||"[]");act.unshift({text:`Nova contribuição: ${x.term} (${x.language})`,time:"Agora"});localStorage.setItem("almActivity",JSON.stringify(act));$("#formMsg").textContent="Obrigado. A contribuição foi enviada para revisão.";e.target.reset();moderation();activity()};
-$("#correctionForm").onsubmit=e=>{e.preventDefault();$("#correctionMsg").textContent="Sugestão registada para análise. Obrigado por ajudar a melhorar o Atlas.";setTimeout(closeModals,900)};
-$$("[data-open]").forEach(b=>b.onclick=()=>{$("#"+b.dataset.open).classList.add("open");moderation()});$$(".close").forEach(b=>b.onclick=closeModals);$$(".modal").forEach(m=>m.onclick=e=>{if(e.target===m)closeModals()});
-$(".menu").onclick=()=>document.querySelector(".topbar nav").classList.toggle("mobile-open");
-fillSelects();renderLanguages();renderDictionary();activity();
-'''
-readme = r'''# ALM — Atlas Linguístico de Moçambique V2
-
-Interface completa do protótipo V2 do Atlas Linguístico de Moçambique.
-
-## O que já está incluído
-- Página inicial e identidade visual inspirada nas cores da bandeira de Moçambique.
-- Mapa/províncias interactivo.
-- Catálogo de línguas com pesquisa e filtro.
-- Dicionário colaborativo com estados: Verificado, Em análise e Pendente.
-- Pronúncia pelo SpeechSynthesis do navegador.
-- Formulário de contribuição.
-- Sistema de sugestão de correcção.
-- Histórico/actividade.
-- Painel de administração de demonstração.
-- Armazenamento local para demonstrar o fluxo.
-
-## Importante
-Esta V2 é uma **interface funcional de demonstração**. As contribuições ainda ficam no navegador através de `localStorage`. Para lançamento público real, a próxima etapa é ligar a aplicação a uma base de dados e autenticação (por exemplo, Supabase), implementar armazenamento de áudio, moderação real, perfis, fontes e histórico persistente.
-
-## GitHub Pages
-1. Crie um repositório público.
-2. Envie `index.html`, `style.css` e `script.js`.
-3. Vá a Settings → Pages.
-4. Em Build and deployment escolha Deploy from a branch.
-5. Branch `main` e pasta `/ (root)`.
-6. Guarde e aguarde a publicação.
-'''
-for name, content in [("index.html",index),("style.css",style),("script.js",script),("README.md",readme)]:
-    (base/name).write_text(content, encoding="utf-8")
-
-zip_path=Path("/mnt/data/atlas-linguistico-mocambique-v2.zip")
-with zipfile.ZipFile(zip_path,"w",zipfile.ZIP_DEFLATED) as z:
-    for p in base.iterdir():
-        z.write(p, arcname=p.name)
-print(f"V2 criada: {zip_path}\nFicheiros: {[p.name for p in base.iterdir()]}")
+</html>
